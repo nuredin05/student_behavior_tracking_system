@@ -83,4 +83,11 @@ const login = async (req, res) => {
   }
 };
 
-module.exports = { login, register };
+const logout = async (req, res) => {
+  // For stateless JWT, logouts happen client-side by deleting the token.
+  // However, providing a dedicated REST endpoint is best practice for audits, 
+  // or if cookies/redis-blacklisting is introduced later.
+  res.json({ message: 'Logged out successfully' });
+};
+
+module.exports = { login, register, logout };

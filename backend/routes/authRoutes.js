@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const authController = require('../controllers/authController');
+const { authenticate } = require('../middlewares/authMiddleware');
 
 /**
  * @swagger
@@ -75,5 +76,20 @@ router.post('/login', authController.login);
  *         description: Bad request or user already exists
  */
 router.post('/register', authController.register);
+
+/**
+ * @swagger
+ * /api/auth/logout:
+ *   post:
+ *     summary: User Logout
+ *     tags: [Auth]
+ *     security:
+ *       - bearerAuth: []
+ *     description: Informs the backend of a logout. Under stateless JWT architectures, the client must simply drop the token.
+ *     responses:
+ *       200:
+ *         description: Successfully logged out.
+ */
+router.post('/logout', authenticate, authController.logout);
 
 module.exports = router;
