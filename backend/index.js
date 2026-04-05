@@ -8,6 +8,8 @@ const swaggerUi = require('swagger-ui-express');
 const behaviorRoutes = require('./routes/behaviorRoutes');
 const authRoutes = require('./routes/authRoutes');
 const studentRoutes = require('./routes/studentRoutes');
+const interventionRoutes = require('./routes/interventionRoutes');
+const schoolRoutes = require('./routes/schoolRoutes');
 
 const app = express();
 
@@ -64,6 +66,8 @@ app.get('/', (req, res) => {
 app.use('/api/behaviors', behaviorRoutes);
 app.use('/api/auth', authRoutes);
 app.use('/api/students', studentRoutes);
+app.use('/api/interventions', interventionRoutes);
+app.use('/api/school', schoolRoutes);
 
 const PORT = process.env.PORT || 5000;
 
