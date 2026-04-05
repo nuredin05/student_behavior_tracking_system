@@ -7,6 +7,7 @@ const swaggerUi = require('swagger-ui-express');
 // Import routes
 const behaviorRoutes = require('./routes/behaviorRoutes');
 const authRoutes = require('./routes/authRoutes');
+const studentRoutes = require('./routes/studentRoutes');
 
 const app = express();
 
@@ -23,6 +24,15 @@ const swaggerOptions = {
       title: 'Student Behavior Tracking API',
       version: '1.0.0',
       description: 'API documentation for the Student Behavior Tracking System',
+    },
+    components: {
+      securitySchemes: {
+        bearerAuth: {
+          type: 'http',
+          scheme: 'bearer',
+          bearerFormat: 'JWT',
+        },
+      },
     },
     servers: [
       {
@@ -53,6 +63,7 @@ app.get('/', (req, res) => {
 // Setup Routes mapping
 app.use('/api/behaviors', behaviorRoutes);
 app.use('/api/auth', authRoutes);
+app.use('/api/students', studentRoutes);
 
 const PORT = process.env.PORT || 5000;
 
