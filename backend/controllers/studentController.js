@@ -1,11 +1,10 @@
 const db = require('../config/db');
 const { v4: uuidv4 } = require('uuid');
 
-// Fetch all students (with class name included)
 const getAllStudents = async (req, res) => {
   try {
     const query = `
-      SELECT s.*, c.name as class_name 
+      SELECT s.*, c.grade_level, c.section 
       FROM students s 
       LEFT JOIN classes c ON s.class_id = c.id
       ORDER BY s.last_name, s.first_name
@@ -18,12 +17,11 @@ const getAllStudents = async (req, res) => {
   }
 };
 
-// Fetch a single student by ID
 const getStudentById = async (req, res) => {
   const { id } = req.params;
   try {
     const [student] = await db.query(`
-      SELECT s.*, c.name as class_name 
+      SELECT s.*, c.grade_level, c.section 
       FROM students s 
       LEFT JOIN classes c ON s.class_id = c.id
       WHERE s.id = ?

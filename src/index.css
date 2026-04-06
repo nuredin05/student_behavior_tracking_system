@@ -39,11 +39,11 @@
   }
 
   .sidebar-link {
-    @apply flex items-center gap-3 px-4 py-3 text-secondary-text rounded-xl hover:bg-primary/10 hover:text-primary transition-all duration-200;
+    @apply flex items-center gap-3 px-4 py-3 text-secondaryClr rounded-xl hover:bg-primaryClr/10 hover:text-primaryClr transition-all duration-200;
   }
 
   .sidebar-link-active {
-    @apply bg-primary/15 text-primary border-l-4 border-primary;
+    @apply bg-primaryClr/15 text-primaryClr border-l-4 border-primaryClr;
   }
 }
 

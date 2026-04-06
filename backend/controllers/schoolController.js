@@ -9,7 +9,7 @@ const getClasses = async (req, res) => {
       SELECT c.*, u.first_name as supervisor_first_name, u.last_name as supervisor_last_name 
       FROM classes c 
       LEFT JOIN users u ON c.supervisor_id = u.id
-      ORDER BY c.academic_year DESC, c.grade_level ASC
+      ORDER BY c.academic_year DESC, c.grade_level ASC, c.section ASC
     `;
     const [rows] = await db.query(query);
     res.json(rows);
@@ -20,24 +20,24 @@ const getClasses = async (req, res) => {
 };
 
 const createClass = async (req, res) => {
-  const { name, grade_level, academic_year, supervisor_id } = req.body;
+  const { grade_level, section, academic_year, supervisor_id } = req.body;
 
-  if (!name || grade_level === undefined || !academic_year) {
-    return res.status(400).json({ error: 'name, grade_level, and academic_year are required' });
+  if (grade_level === undefined || !section || !academic_year) {
+    return res.status(400).json({ error: 'grade_level, section, and academic_year are required' });
   }
 
   try {
     const classId = uuidv4();
     await db.query(`
-      INSERT INTO classes (id, name, grade_level, academic_year, supervisor_id)
+      INSERT INTO classes (id, grade_level, section, academic_year, supervisor_id)
       VALUES (?, ?, ?, ?, ?)
-    `, [classId, name, grade_level, academic_year, supervisor_id || null]);
+    `, [classId, grade_level, section, academic_year, supervisor_id || null]);
 
     res.status(201).json({ message: 'Class created successfully', id: classId });
   } catch (error) {
     console.error('Error creating class:', error);
     if (error.code === 'ER_DUP_ENTRY') {
-      return res.status(400).json({ error: 'This class name already exists for the given academic year' });
+      return res.status(400).json({ error: 'This class already exists for the given academic year' });
     }
     res.status(500).json({ error: 'Internal Server Error' });
   }
