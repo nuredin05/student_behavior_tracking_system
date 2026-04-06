@@ -1,3 +1,64 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+@layer base {
+  :root {
+    --bg-primary: #121212;
+    --bg-secondary: #1e1e1e;
+    --text-primary: #f7f9fc;
+    --text-secondary: #b0b0b0;
+    --accent: #8c4830;
+  }
+
+  body {
+    @apply bg-bgDarkAll text-primaryClrText font-sans;
+    background-color: theme('colors.bgDarkAll');
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-display font-semibold tracking-wide;
+  }
+}
+
+@layer components {
+  .btn-primary {
+    @apply px-6 py-2 bg-primaryClr hover:bg-primaryClrLight text-white rounded-lg transition-all duration-300 shadow-lg hover:shadow-primaryClr/20 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed;
+  }
+
+  .btn-secondary {
+    @apply px-6 py-2 bg-secondaryClr hover:bg-secondaryClrDark text-bgDarkAll rounded-lg transition-all duration-300;
+  }
+
+  .input-field {
+    @apply w-full px-4 py-3 bg-bgDark text-primaryClrText rounded-lg border border-primaryClr/20 focus:border-primaryClr focus:ring-2 focus:ring-primaryClr/20 outline-none transition-all duration-300;
+  }
+
+  .glass-card {
+    @apply bg-bgDark/40 backdrop-blur-md border border-white/10 rounded-2xl p-8 shadow-2xl;
+  }
+
+  .sidebar-link {
+    @apply flex items-center gap-3 px-4 py-3 text-secondary-text rounded-xl hover:bg-primary/10 hover:text-primary transition-all duration-200;
+  }
+
+  .sidebar-link-active {
+    @apply bg-primary/15 text-primary border-l-4 border-primary;
+  }
+}
+
+/* Custom Animations */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fadeInUp {
+  animation: fadeInUp 0.6s ease-out forwards;
+}
