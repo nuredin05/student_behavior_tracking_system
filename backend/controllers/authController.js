@@ -4,28 +4,28 @@ const jwt = require('jsonwebtoken');
 const { v4: uuidv4 } = require('uuid');
 
 const register = async (req, res) => {
-  const { first_name, last_name, email, password, role, phone, profile_picture } = req.body;
+  const { phone, password, role, first_name, last_name, email, profile_picture } = req.body;
 
-  if (!first_name || !last_name || !email || !password || !role) {
-    return res.status(400).json({ error: 'first_name, last_name, email, password, and role are required' });
+  if (!phone || !password || !role || !first_name || !last_name) {
+    return res.status(400).json({ error: 'phone, password, role, first_name, and last_name are required' });
   }
 
   try {
-    const [existing] = await db.query('SELECT id FROM users WHERE email = ?', [email]);
+    const [existing] = await db.query('SELECT id FROM users WHERE phone = ?', [phone]);
     if (existing.length > 0) {
-      return res.status(400).json({ error: 'User with this email already exists' });
+      return res.status(400).json({ error: 'User with this phone number already exists' });
     }
 
     const password_hash = await bcrypt.hash(password, 10);
     const userId = uuidv4();
 
     await db.query(`
-      INSERT INTO users (id, first_name, last_name, email, password_hash, role, phone, profile_picture)
+      INSERT INTO users (id, phone, email, password_hash, role, first_name, last_name, profile_picture)
       VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-    `, [userId, first_name, last_name, email, password_hash, role, phone || null, profile_picture || null]);
+    `, [userId, phone, email || null, password_hash, role, first_name, last_name, profile_picture || null]);
 
     const token = jwt.sign(
-      { id: userId, email, role },
+      { id: userId, phone, role },
       process.env.JWT_SECRET || 'your_super_secret_key',
       { expiresIn: '1d' }
     );
@@ -33,7 +33,7 @@ const register = async (req, res) => {
     res.status(201).json({
       message: 'Registration successful',
       token,
-      user: { id: userId, first_name, last_name, email, role }
+      user: { id: userId, phone, first_name, last_name, role }
     });
   } catch (error) {
     console.error('Registration error:', error);
@@ -42,29 +42,29 @@ const register = async (req, res) => {
 };
 
 const login = async (req, res) => {
-  const { email, password } = req.body;
+  const { phone, password } = req.body;
 
-  if (!email || !password) {
-    return res.status(400).json({ error: 'Email and password are required' });
+  if (!phone || !password) {
+    return res.status(400).json({ error: 'Phone and password are required' });
   }
 
   try {
-    const [users] = await db.query('SELECT * FROM users WHERE email = ? AND is_active = true', [email]);
+    const [users] = await db.query('SELECT * FROM users WHERE phone = ? AND is_active = true', [phone]);
     
     if (users.length === 0) {
-      return res.status(401).json({ error: 'Invalid email or password' });
+      return res.status(401).json({ error: 'Invalid phone or password' });
     }
 
     const user = users[0];
     const isPasswordValid = await bcrypt.compare(password, user.password_hash);
 
     if (!isPasswordValid) {
-      return res.status(401).json({ error: 'Invalid email or password' });
+      return res.status(401).json({ error: 'Invalid phone or password' });
     }
 
     // Generate Role-Based JWT
     const token = jwt.sign(
-      { id: user.id, email: user.email, role: user.role },
+      { id: user.id, phone: user.phone, role: user.role },
       process.env.JWT_SECRET || 'your_super_secret_key',
       { expiresIn: '1d' }
     );

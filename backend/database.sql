@@ -1,13 +1,14 @@
--- MySQL Schema Setup for Student Behavior Tracking System
+-- SBTS: Student Behavior Tracking System (3NF Refined)
 
+-- 1. Users table (Core authentication and profiles)
 CREATE TABLE IF NOT EXISTS users (
     id VARCHAR(36) PRIMARY KEY,
+    phone VARCHAR(20) UNIQUE NOT NULL, -- Primary identifier for login
+    email VARCHAR(100) UNIQUE,        -- Optional email
+    password_hash VARCHAR(255) NOT NULL,
+    role ENUM('officer', 'teacher', 'supervisor', 'manager', 'parent') NOT NULL,
     first_name VARCHAR(50) NOT NULL,
     last_name VARCHAR(50) NOT NULL,
-    email VARCHAR(100) UNIQUE NOT NULL,
-    password_hash VARCHAR(255) NOT NULL,
-    role ENUM('admin', 'supervisor', 'teacher', 'parent') NOT NULL,
-    phone VARCHAR(20),
     profile_picture VARCHAR(255),
     is_active BOOLEAN DEFAULT true,
     last_login DATETIME,
@@ -15,42 +16,47 @@ CREATE TABLE IF NOT EXISTS users (
     updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 );
 
+-- 2. Classes table (Organizational units)
 CREATE TABLE IF NOT EXISTS classes (
     id VARCHAR(36) PRIMARY KEY,
-    name VARCHAR(50) NOT NULL,
     grade_level INT NOT NULL,
+    section VARCHAR(10) NOT NULL,
     academic_year VARCHAR(20) NOT NULL,
     supervisor_id VARCHAR(36),
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-    UNIQUE(name, academic_year),
+    UNIQUE(grade_level, section, academic_year),
     FOREIGN KEY (supervisor_id) REFERENCES users(id) ON DELETE SET NULL
 );
 
+-- 3. Students table (The subjects)
 CREATE TABLE IF NOT EXISTS students (
     id VARCHAR(36) PRIMARY KEY,
     admission_number VARCHAR(50) UNIQUE NOT NULL,
     first_name VARCHAR(50) NOT NULL,
     last_name VARCHAR(50) NOT NULL,
     date_of_birth DATE,
-    gender VARCHAR(10),
+    gender ENUM('male', 'female', 'other'),
     class_id VARCHAR(36),
-    enrollment_date DATE,
-    status VARCHAR(20) DEFAULT 'active',
-    points_balance INT DEFAULT 0,
+    photo_url VARCHAR(255) NOT NULL, -- Mandatory photo
+    current_points INT DEFAULT 0,
+    registered_by VARCHAR(36),
+    status ENUM('active', 'withdrawn', 'graduated') DEFAULT 'active',
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    FOREIGN KEY (class_id) REFERENCES classes(id) ON DELETE SET NULL
+    FOREIGN KEY (class_id) REFERENCES classes(id) ON DELETE SET NULL,
+    FOREIGN KEY (registered_by) REFERENCES users(id) ON DELETE SET NULL
 );
 
+-- 4. Parents table (Sub-profile of users)
 CREATE TABLE IF NOT EXISTS parents (
     id VARCHAR(36) PRIMARY KEY,
     user_id VARCHAR(36) UNIQUE NOT NULL,
-    emergency_contact VARCHAR(50),
     address TEXT,
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    emergency_contact VARCHAR(50),
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 );
 
+-- 5. Student-Parent bridge (Many-to-Many)
 CREATE TABLE IF NOT EXISTS student_parents (
     student_id VARCHAR(36),
     parent_id VARCHAR(36),
@@ -62,30 +68,31 @@ CREATE TABLE IF NOT EXISTS student_parents (
     FOREIGN KEY (parent_id) REFERENCES parents(id) ON DELETE CASCADE
 );
 
+-- 6. Behavior Categories (System parameters)
 CREATE TABLE IF NOT EXISTS behavior_categories (
     id VARCHAR(36) PRIMARY KEY,
     name VARCHAR(100) UNIQUE NOT NULL,
-    type VARCHAR(20) NOT NULL,
+    type ENUM('positive', 'negative', 'neutral') NOT NULL,
     default_points INT NOT NULL,
-    severity_level INT DEFAULT 1,
+    severity_level ENUM('low', 'medium', 'high', 'urgent') DEFAULT 'low',
     description TEXT,
     is_active BOOLEAN DEFAULT true,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP
 );
 
+-- 7. Behavior Records (Transaction logs)
 CREATE TABLE IF NOT EXISTS behavior_records (
     id VARCHAR(36) PRIMARY KEY,
     student_id VARCHAR(36) NOT NULL,
     category_id VARCHAR(36) NOT NULL,
     recorded_by VARCHAR(36) NOT NULL,
-    points INT NOT NULL,
+    points_applied INT NOT NULL,
     comment TEXT,
-    date DATE NOT NULL,
-    time TIME,
-    location VARCHAR(100),
-    is_approved BOOLEAN DEFAULT true,
+    incident_date DATE NOT NULL,
+    evidence_url VARCHAR(255),
+    status ENUM('pending', 'approved', 'rejected', 'escalated') DEFAULT 'pending',
     approved_by VARCHAR(36),
-    approved_at DATETIME,
+    parent_acknowledged BOOLEAN DEFAULT false,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     FOREIGN KEY (student_id) REFERENCES students(id) ON DELETE CASCADE,
@@ -94,35 +101,20 @@ CREATE TABLE IF NOT EXISTS behavior_records (
     FOREIGN KEY (approved_by) REFERENCES users(id)
 );
 
-CREATE TABLE IF NOT EXISTS interventions (
-    id VARCHAR(36) PRIMARY KEY,
-    behavior_id VARCHAR(36) NOT NULL,
-    action_taken TEXT NOT NULL,
-    assigned_to VARCHAR(36),
-    status VARCHAR(30) DEFAULT 'pending',
-    due_date DATE,
-    completed_at DATETIME,
-    notes TEXT,
-    created_by VARCHAR(36),
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (behavior_id) REFERENCES behavior_records(id) ON DELETE CASCADE,
-    FOREIGN KEY (assigned_to) REFERENCES users(id),
-    FOREIGN KEY (created_by) REFERENCES users(id)
-);
-
+-- 8. Notifications (Alerts)
 CREATE TABLE IF NOT EXISTS notifications (
     id VARCHAR(36) PRIMARY KEY,
     user_id VARCHAR(36) NOT NULL,
     title VARCHAR(255) NOT NULL,
     message TEXT NOT NULL,
-    type VARCHAR(50) NOT NULL,
-    related_behavior_id VARCHAR(36),
+    type ENUM('incident', 'report', 'system') NOT NULL,
+    related_id VARCHAR(36),
     is_read BOOLEAN DEFAULT false,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
-    FOREIGN KEY (related_behavior_id) REFERENCES behavior_records(id) ON DELETE SET NULL
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 );
 
+-- 9. Audit Logs (Integrity)
 CREATE TABLE IF NOT EXISTS audit_logs (
     id VARCHAR(36) PRIMARY KEY,
     user_id VARCHAR(36),
@@ -131,16 +123,6 @@ CREATE TABLE IF NOT EXISTS audit_logs (
     record_id VARCHAR(36),
     old_data JSON,
     new_data JSON,
-    ip_address VARCHAR(45),
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE SET NULL
-);
-
-CREATE TABLE IF NOT EXISTS academic_periods (
-    id VARCHAR(36) PRIMARY KEY,
-    name VARCHAR(50) NOT NULL,
-    start_date DATE NOT NULL,
-    end_date DATE NOT NULL,
-    academic_year VARCHAR(20) NOT NULL,
-    is_active BOOLEAN DEFAULT false
 );

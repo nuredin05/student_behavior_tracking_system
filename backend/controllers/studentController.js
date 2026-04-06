@@ -39,16 +39,16 @@ const getStudentById = async (req, res) => {
   }
 };
 
-// Create a new student
+// Create a new student (Officer task)
 const createStudent = async (req, res) => {
-  const { admission_number, first_name, last_name, date_of_birth, gender, class_id, enrollment_date } = req.body;
+  const { admission_number, first_name, last_name, date_of_birth, gender, class_id, photo_url } = req.body;
+  const officerId = req.user.id; // From authMiddleware
 
-  if (!admission_number || !first_name || !last_name) {
-    return res.status(400).json({ error: 'admission_number, first_name, and last_name are required' });
+  if (!admission_number || !first_name || !last_name || !photo_url) {
+    return res.status(400).json({ error: 'admission_number, first_name, last_name, and photo_url are required' });
   }
 
   try {
-    // Check if admission number is unique
     const [existing] = await db.query('SELECT id FROM students WHERE admission_number = ?', [admission_number]);
     if (existing.length > 0) {
       return res.status(400).json({ error: 'A student with this admission number already exists' });
@@ -56,13 +56,13 @@ const createStudent = async (req, res) => {
 
     const studentId = uuidv4();
     await db.query(`
-      INSERT INTO students (id, admission_number, first_name, last_name, date_of_birth, gender, class_id, enrollment_date)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-    `, [studentId, admission_number, first_name, last_name, date_of_birth || null, gender || null, class_id || null, enrollment_date || null]);
+      INSERT INTO students (id, admission_number, first_name, last_name, date_of_birth, gender, class_id, photo_url, registered_by)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `, [studentId, admission_number, first_name, last_name, date_of_birth || null, gender || null, class_id || null, photo_url, officerId]);
 
     res.status(201).json({ 
       message: 'Student created successfully',
-      student: { id: studentId, admission_number, first_name, last_name }
+      student: { id: studentId, admission_number, first_name, last_name, photo_url }
     });
   } catch (error) {
     console.error('Error creating student:', error);

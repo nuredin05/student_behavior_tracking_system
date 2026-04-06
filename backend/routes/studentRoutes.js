@@ -46,28 +46,53 @@ router.get('/', authenticate, studentController.getAllStudents);
  */
 router.get('/:id', authenticate, studentController.getStudentById);
 
+const multer = require('multer');
+const path = require('path');
+
+// Configure multer for student photo storage
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, 'uploads/students/');
+  },
+  filename: (req, file, cb) => {
+    cb(null, `student-${Date.now()}${path.extname(file.originalname)}`);
+  }
+});
+
+const upload = multer({ 
+  storage,
+  limits: { fileSize: 5 * 1024 * 1024 }, // 5MB limit
+  fileFilter: (req, file, cb) => {
+    const filetypes = /jpeg|jpg|png/;
+    const extname = filetypes.test(path.extname(file.originalname).toLowerCase());
+    const mimetype = filetypes.test(file.mimetype);
+    if (mimetype && extname) return cb(null, true);
+    cb(new Error('Images only (jpeg, jpg, png)!'));
+  }
+});
+
 /**
  * @swagger
  * /api/students:
  *   post:
- *     summary: Create a new student (Admin, Supervisor, Teacher)
+ *     summary: Create a new student (Officer only)
  *     tags: [Students]
  *     security:
  *       - bearerAuth: []
  *     requestBody:
  *       required: true
  *       content:
- *         application/json:
+ *         multipart/form-data:
  *           schema:
  *             type: object
  *             required:
  *               - admission_number
  *               - first_name
  *               - last_name
+ *               - photo
  *             properties:
  *               admission_number:
  *                 type: string
- *                 example: STU-2026-001
  *               first_name:
  *                 type: string
  *               last_name:
@@ -75,16 +100,24 @@ router.get('/:id', authenticate, studentController.getStudentById);
  *               date_of_birth:
  *                 type: string
  *                 format: date
- *                 example: "2010-05-15"
  *               gender:
  *                 type: string
  *               class_id:
  *                 type: string
+ *               photo:
+ *                 type: string
+ *                 format: binary
  *     responses:
  *       201:
  *         description: Student created successfully
  */
-router.post('/', authenticate, authorize('admin', 'supervisor', 'teacher'), studentController.createStudent);
+router.post('/', authenticate, authorize('officer', 'supervisor', 'admin'), upload.single('photo'), (req, res, next) => {
+  // Add photo_url to req.body so controller can pick it up
+  if (req.file) {
+    req.body.photo_url = `/uploads/students/${req.file.filename}`;
+  }
+  next();
+}, studentController.createStudent);
 
 /**
  * @swagger

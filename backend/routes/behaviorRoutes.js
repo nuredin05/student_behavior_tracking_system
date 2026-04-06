@@ -102,11 +102,10 @@ router.put('/categories/:id', authenticate, authorize('admin', 'supervisor'), be
  * @swagger
  * /api/behaviors/records:
  *   post:
- *     summary: Log a student behavior
+ *     summary: Log a student behavior (Teacher task)
  *     tags: [Behaviors]
  *     security:
  *       - bearerAuth: []
- *     description: Records a behavior and calculates the point addition/subtraction dynamically into the student's profile ledger.
  *     requestBody:
  *       required: true
  *       content:
@@ -116,26 +115,59 @@ router.put('/categories/:id', authenticate, authorize('admin', 'supervisor'), be
  *             required:
  *               - student_id
  *               - category_id
- *               - points
+ *               - points_applied
  *             properties:
  *               student_id:
  *                 type: string
  *               category_id:
  *                 type: string
- *               points:
+ *               points_applied:
  *                 type: integer
- *                 description: Explicit integer denoting points.
  *               comment:
  *                 type: string
- *               date:
+ *               incident_date:
  *                 type: string
  *                 format: date
- *               location:
+ *               evidence_url:
  *                 type: string
  *     responses:
  *       201:
- *         description: Behavior successfully logged and points calculated.
+ *         description: Behavior logged successfully. Pending review.
  */
-router.post('/records', authenticate, authorize('admin', 'supervisor', 'teacher'), behaviorController.logBehavior);
+router.post('/records', authenticate, authorize('teacher', 'supervisor', 'admin'), behaviorController.logBehavior);
+
+/**
+ * @swagger
+ * /api/behaviors/records/{id}/review:
+ *   patch:
+ *     summary: Review and approve/reject behavior (Supervisor task)
+ *     tags: [Behaviors]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - status
+ *             properties:
+ *               status:
+ *                 type: string
+ *                 enum: [approved, rejected, escalated]
+ *               comment:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: Behavior record reviewed successfully.
+ */
+router.patch('/records/:id/review', authenticate, authorize('supervisor', 'admin'), behaviorController.reviewBehavior);
 
 module.exports = router;

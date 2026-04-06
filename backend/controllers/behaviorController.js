@@ -76,40 +76,80 @@ const updateCategory = async (req, res) => {
 
 // ----- BEHAVIOR LOGGING -----
 
-// Record a behavior incident (positive or negative)
+// Record a behavior incident (Teacher task)
 const logBehavior = async (req, res) => {
-  const { student_id, category_id, points, comment, date, location } = req.body;
-  const recorded_by = req.user.id; // Securely map from the verified Auth JWT Token
+  const { student_id, category_id, points_applied, comment, incident_date, evidence_url } = req.body;
+  const recorded_by = req.user.id;
 
-  if (!student_id || !category_id || points === undefined) {
-    return res.status(400).json({ error: 'student_id, category_id, and points are required' });
+  if (!student_id || !category_id || points_applied === undefined) {
+    return res.status(400).json({ error: 'student_id, category_id, and points_applied are required' });
+  }
+
+  try {
+    const recordId = uuidv4();
+    const date = incident_date || new Date().toISOString().split('T')[0];
+    
+    // Insert behavior record (Initial status is 'pending')
+    await db.query(`
+      INSERT INTO behavior_records (id, student_id, category_id, recorded_by, points_applied, comment, incident_date, evidence_url, status)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'pending')
+    `, [recordId, student_id, category_id, recorded_by, points_applied, comment || null, date, evidence_url || null]);
+
+    res.status(201).json({ message: 'Behavior logged successfully. Pending supervisor review.', id: recordId });
+  } catch (error) {
+    console.error('Error logging behavior:', error);
+    res.status(500).json({ error: 'Internal Server Error' });
+  }
+};
+
+// Review and Approve/Reject Behavior (Supervisor task)
+const reviewBehavior = async (req, res) => {
+  const { id } = req.params;
+  const { status, comment } = req.body;
+  const approved_by = req.user.id;
+
+  if (!['approved', 'rejected', 'escalated'].includes(status)) {
+    return res.status(400).json({ error: 'Invalid status. Must be approved, rejected, or escalated.' });
   }
 
   const connection = await db.getConnection();
   try {
     await connection.beginTransaction();
 
-    const recordId = uuidv4();
-    const behaviorDate = date || new Date().toISOString().split('T')[0];
-    
-    // Insert behavior record
-    await connection.query(`
-      INSERT INTO behavior_records (id, student_id, category_id, recorded_by, points, comment, date, location)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-    `, [recordId, student_id, category_id, recorded_by, points, comment || null, behaviorDate, location || null]);
+    // 1. Get the record details
+    const [records] = await connection.query('SELECT student_id, points_applied, status FROM behavior_records WHERE id = ?', [id]);
+    if (records.length === 0) {
+      await connection.rollback();
+      return res.status(404).json({ error: 'Behavior record not found' });
+    }
 
-    // Transactionally update the student point ledger
+    const record = records[0];
+    if (record.status !== 'pending' && record.status !== 'escalated') {
+      await connection.rollback();
+      return res.status(400).json({ error: 'Record has already been processed' });
+    }
+
+    // 2. Update record status
     await connection.query(`
-      UPDATE students 
-      SET points_balance = points_balance + ? 
+      UPDATE behavior_records 
+      SET status = ?, approved_by = ?, comment = COALESCE(?, comment)
       WHERE id = ?
-    `, [points, student_id]);
+    `, [status, approved_by, comment, id]);
+
+    // 3. If approved, update student points balance
+    if (status === 'approved') {
+      await connection.query(`
+        UPDATE students 
+        SET current_points = current_points + ? 
+        WHERE id = ?
+      `, [record.points_applied, record.student_id]);
+    }
 
     await connection.commit();
-    res.status(201).json({ message: 'Behavior successfully logged and points calculated', id: recordId });
+    res.json({ message: `Behavior record ${status} successfully` });
   } catch (error) {
     await connection.rollback();
-    console.error('Error logging behavior:', error);
+    console.error('Error reviewing behavior:', error);
     res.status(500).json({ error: 'Internal Server Error' });
   } finally {
     connection.release();
@@ -120,5 +160,6 @@ module.exports = {
   getBehaviorCategories,
   createCategory,
   updateCategory,
-  logBehavior
+  logBehavior,
+  reviewBehavior
 };
