@@ -16,8 +16,12 @@ const ForgotPassword = () => {
     setError('');
     setIsLoading(true);
     try {
-      const response = await api.post('/auth/forgot-password', { phone });
+      await api.post('/auth/forgot-password', { phone });
       setSuccess(true);
+      // Automatically redirect to reset password page
+      setTimeout(() => {
+        navigate('/reset-password', { state: { phone } });
+      }, 100); 
     } catch (err) {
       setError(err.response?.data?.error || 'Failed to request reset. Please check the phone number.');
     } finally {

@@ -257,4 +257,22 @@ router.post('/records', authenticate, authorize('teacher', 'supervisor', 'admin'
  */
 router.patch('/records/:id/review', authenticate, authorize('supervisor', 'admin'), behaviorController.reviewBehavior);
 
+/**
+ * @swagger
+ * /api/behaviors/certificate/{studentId}:
+ *   get:
+ *     summary: Get student conduct certificate data
+ *     tags: [Behaviors]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: studentId
+ *         required: true
+ *     responses:
+ *       200:
+ *         description: Student certificate data
+ */
+router.get('/certificate/:studentId', authenticate, authorize('supervisor', 'admin'), behaviorController.getCertificateData);
+
 module.exports = router;

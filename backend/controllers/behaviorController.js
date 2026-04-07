@@ -364,6 +364,57 @@ const getTeacherHistory = async (req, res) => {
   }
 };
 
+const getCertificateData = async (req, res) => {
+  const { studentId } = req.params;
+  try {
+    const [students] = await db.query(`
+      SELECT s.*, c.name as class_name, c.grade_level, c.section, u.first_name as teacher_first_name, u.last_name as teacher_last_name
+      FROM students s
+      JOIN classes c ON s.class_id = c.id
+      LEFT JOIN users u ON c.teacher_id = u.id
+      WHERE s.id = ?
+    `, [studentId]);
+
+    if (students.length === 0) return res.status(404).json({ error: 'Student not found' });
+
+    const student = students[0];
+
+    const [behaviorSummary] = await db.query(`
+      SELECT 
+        SUM(CASE WHEN bc.type = 'positive' THEN br.points_applied ELSE 0 END) as total_positive,
+        SUM(CASE WHEN bc.type = 'negative' THEN br.points_applied ELSE 0 END) as total_negative,
+        COUNT(br.id) as total_incidents
+      FROM behavior_records br
+      JOIN behavior_categories bc ON br.category_id = bc.id
+      WHERE br.student_id = ? AND br.status = 'approved'
+    `, [studentId]);
+
+    const stats = behaviorSummary[0];
+    const netPoints = student.current_points;
+
+    // Conduct Grade Logic
+    let conductGrade = 'Good';
+    if (netPoints >= 100) conductGrade = 'Outstanding';
+    else if (netPoints >= 80) conductGrade = 'Excellent';
+    else if (netPoints >= 60) conductGrade = 'Very Good';
+    else if (netPoints >= 40) conductGrade = 'Good';
+    else if (netPoints >= 20) conductGrade = 'Satisfactory';
+    else conductGrade = 'Needs Improvement';
+
+    res.json({
+      student,
+      stats,
+      conductGrade,
+      generatedAt: new Date().toISOString(),
+      schoolName: 'Amana Model Secondary School',
+      academicYear: '2023/2024'
+    });
+  } catch (error) {
+    console.error('Error fetching certificate data:', error);
+    res.status(500).json({ error: 'Internal Server Error' });
+  }
+};
+
 module.exports = {
   getBehaviorCategories,
   createCategory,
@@ -373,5 +424,6 @@ module.exports = {
   getPendingRecords,
   getSupervisorStats,
   getAnalyticsSummary,
-  getTeacherHistory
+  getTeacherHistory,
+  getCertificateData
 };

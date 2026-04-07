@@ -23,9 +23,12 @@ import {
   AlertCircle
 } from 'lucide-react';
 
+import { useAuth } from '../context/AuthContext';
+
 const StudentDetail = () => {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { user: currentUser } = useAuth();
    const [data, setData] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -119,6 +122,14 @@ const StudentDetail = () => {
           Back to Registry
         </button>
         <div className="flex gap-3">
+          {(['supervisor', 'admin', 'manager'].includes(currentUser?.role)) && (
+            <button 
+              onClick={() => navigate(`/certificate/${id}`)}
+              className="btn-secondary px-4 py-2 text-xs flex items-center gap-2 border-accentClr/30 text-accentClr hover:bg-accentClr/10"
+            >
+              <Trophy size={14} /> Generate Certificate
+            </button>
+          )}
           <button className="btn-secondary px-4 py-2 text-xs">Print Report</button>
           <button 
             onClick={() => setIsLogging(true)}
@@ -177,6 +188,21 @@ const StudentDetail = () => {
                 <span className="inline-flex items-center gap-1.5 text-accentClr text-sm font-bold">
                   <span className="w-2 h-2 rounded-full bg-accentClr"></span>
                   Active
+                </span>
+              </div>
+              <div>
+                <p className="text-[10px] text-secondaryClr uppercase tracking-widest font-bold mb-1">Conduct Rating</p>
+                <span className={`text-[10px] sm:text-xs uppercase font-black px-3 py-1 rounded-full border ${
+                  student.current_points >= 80 ? 'bg-accentClr/10 text-accentClr border-accentClr/20' :
+                  student.current_points >= 40 ? 'bg-primaryClr/10 text-primaryClr border-primaryClr/20' :
+                  'bg-dangerClr/10 text-dangerClr border-dangerClr/20'
+                }`}>
+                  {student.current_points >= 100 ? 'Outstanding' :
+                   student.current_points >= 80 ? 'Excellent' :
+                   student.current_points >= 60 ? 'Very Good' :
+                   student.current_points >= 40 ? 'Good' :
+                   student.current_points >= 20 ? 'Satisfactory' :
+                   'Needs Improvement'}
                 </span>
               </div>
               <div>

@@ -70,14 +70,40 @@ const getStudentFullProfile = async (req, res) => {
     `, [id]);
 
     // 3. Get Active Interventions
-    const [interventions] = await db.query(`
-      SELECT i.*, u.first_name as creator_first_name, u.last_name as creator_last_name
-      FROM interventions i
-      JOIN users u ON i.created_by = u.id
-      JOIN behavior_records b ON i.behavior_id = b.id
-      WHERE b.student_id = ?
-      ORDER BY i.created_at DESC
-    `, [id]);
+    let interventions = [];
+    try {
+      const [rows] = await db.query(`
+        SELECT i.*, u.first_name as creator_first_name, u.last_name as creator_last_name
+        FROM interventions i
+        JOIN users u ON i.created_by = u.id
+        JOIN behavior_records b ON i.behavior_id = b.id
+        WHERE b.student_id = ?
+        ORDER BY i.created_at DESC
+      `, [id]);
+      interventions = rows;
+    } catch (dbErr) {
+      if (dbErr.code === 'ER_NO_SUCH_TABLE') {
+        console.log('[SELF-HEAL] Creating missing interventions table...');
+        await db.query(`
+          CREATE TABLE IF NOT EXISTS interventions (
+            id VARCHAR(255) PRIMARY KEY,
+            behavior_id VARCHAR(255),
+            action_taken TEXT NOT NULL,
+            status VARCHAR(50) DEFAULT 'pending',
+            assigned_to VARCHAR(255),
+            due_date DATE,
+            notes TEXT,
+            completed_at TIMESTAMP NULL,
+            created_by VARCHAR(255),
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (behavior_id) REFERENCES behavior_records(id) ON DELETE CASCADE,
+            FOREIGN KEY (created_by) REFERENCES users(id)
+          )
+        `);
+      } else {
+        throw dbErr;
+      }
+    }
 
     res.json({
       student: student[0],

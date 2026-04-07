@@ -32,7 +32,7 @@ const getInterventions = async (req, res) => {
              u1.first_name as assigned_to_name, 
              u2.first_name as created_by_name,
              b.student_id,
-             b.points,
+             b.points_applied,
              s.first_name as student_first_name,
              s.last_name as student_last_name
       FROM interventions i

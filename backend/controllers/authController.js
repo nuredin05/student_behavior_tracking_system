@@ -193,6 +193,25 @@ const forgotPassword = async (req, res) => {
   }
 };
 
+const verifyResetToken = async (req, res) => {
+  const { phone, code } = req.body;
+  try {
+    const [users] = await db.query(`
+      SELECT id FROM users 
+      WHERE phone = ? AND reset_token = ? AND reset_token_expiry > NOW()
+    `, [phone, code]);
+
+    if (users.length === 0) {
+      return res.status(400).json({ error: 'Invalid or expired reset code' });
+    }
+
+    res.json({ message: 'Code verified successfully' });
+  } catch (error) {
+    console.error('Verify token error:', error);
+    res.status(500).json({ error: 'Internal Server Error' });
+  }
+};
+
 const resetPassword = async (req, res) => {
   const { phone, code, newPassword } = req.body;
   try {
@@ -268,4 +287,4 @@ const logout = async (req, res) => {
   res.json({ message: 'Logged out successfully' });
 };
 
-module.exports = { login, register, logout, getAllUsers, updateUser, updateProfile, deleteMe, changePassword, forgotPassword, resetPassword };
+module.exports = { login, register, logout, getAllUsers, updateUser, updateProfile, deleteMe, changePassword, forgotPassword, resetPassword, verifyResetToken };

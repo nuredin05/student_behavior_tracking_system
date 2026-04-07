@@ -18,7 +18,7 @@ const sendResetEmail = async (userEmail, resetCode) => {
   const html = `
     <div style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; padding: 40px; background-color: #f9f9f9; text-align: center; border-radius: 20px;">
       <div style="max-width: 500px; margin: 0 auto; background: white; padding: 40px; border-radius: 30px; box-shadow: 0 10px 40px rgba(0,0,0,0.05); border: 1px solid #eee;">
-        <h1 style="color: #6C5DD3; font-size: 28px; margin-bottom: 20px;">Staff Portal Recovery</h1>
+        <h1 style="color: #6C5DD3; font-size: 28px; margin-bottom: 20px;">Staff password Recovery</h1>
         <p style="color: #666; font-size: 16px; line-height: 1.6;">Hello, a password reset was requested for your account. Please use the secure authorization code below:</p>
         <div style="background: #f4f2ff; padding: 30px; border-radius: 20px; margin: 30px 0; border: 2px dashed #6C5DD3;">
           <span style="font-size: 42px; font-weight: 900; color: #6C5DD3; letter-spacing: 12px; font-family: monospace;">${resetCode}</span>
@@ -70,13 +70,13 @@ const sendResetEmail = async (userEmail, resetCode) => {
       // console.log('📧 [EMAIL DISPATCHED SUCCESSFULLY]');
       // console.log(`📡 To: ${userEmail}`);
       if (!process.env.EMAIL_USER) {
-        console.log(`🔗 PREVIEW LINK: ${nodemailer.getTestMessageUrl(info)}`);
+        console.log(` PREVIEW LINK: ${nodemailer.getTestMessageUrl(info)}`);
       }
-      console.log('✉️ '.repeat(20) + '\n');
+      console.log(repeat(20) + '\n');
 
       return { success: true, previewUrl: nodemailer.getTestMessageUrl(info) };
     } catch (err) {
-      console.error('❌ [Email Error]', err.message);
+      console.error(' [Email Error]', err.message);
       // Fallback log
       return { success: false, error: err.message };
     }

@@ -89,6 +89,7 @@ router.patch('/change-password', authenticate, authController.changePassword);
 router.delete('/me', authenticate, authController.deleteMe);
 
 router.post('/forgot-password', authController.forgotPassword);
+router.post('/verify-token', authController.verifyResetToken);
 router.post('/reset-password', authController.resetPassword);
 
 /**
