@@ -332,6 +332,38 @@ const getAnalyticsSummary = async (req, res) => {
   }
 };
 
+const getTeacherHistory = async (req, res) => {
+  const teacherId = req.user.id;
+  try {
+    const query = `
+      SELECT br.*, 
+             s.first_name as student_first_name, s.last_name as student_last_name, s.admission_number,
+             bc.name as category_name, bc.type as category_type
+      FROM behavior_records br
+      JOIN students s ON br.student_id = s.id
+      JOIN behavior_categories bc ON br.category_id = bc.id
+      WHERE br.recorded_by = ?
+      ORDER BY br.created_at DESC
+      LIMIT 10
+    `;
+    const [rows] = await db.query(query, [teacherId]);
+
+    const [todayCount] = await db.query(`
+      SELECT COUNT(*) as count 
+      FROM behavior_records 
+      WHERE recorded_by = ? AND DATE(created_at) = CURDATE()
+    `, [teacherId]);
+
+    res.json({
+      history: rows,
+      todayCount: todayCount[0].count
+    });
+  } catch (error) {
+    console.error('Error fetching teacher history:', error);
+    res.status(500).json({ error: 'Internal Server Error' });
+  }
+};
+
 module.exports = {
   getBehaviorCategories,
   createCategory,
@@ -340,5 +372,6 @@ module.exports = {
   reviewBehavior,
   getPendingRecords,
   getSupervisorStats,
-  getAnalyticsSummary
+  getAnalyticsSummary,
+  getTeacherHistory
 };

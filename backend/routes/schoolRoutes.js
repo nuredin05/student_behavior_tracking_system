@@ -61,6 +61,8 @@ router.get('/classes', authenticate, schoolController.getClasses);
  *         description: Class successfully created.
  */
 router.post('/classes', authenticate, authorize('admin', 'supervisor'), schoolController.createClass);
+router.patch('/classes/:id', authenticate, authorize('admin', 'supervisor'), schoolController.updateClass);
+router.delete('/classes/:id', authenticate, authorize('admin', 'supervisor'), schoolController.deleteClass);
 
 
 // --- Academic Period Routes ---

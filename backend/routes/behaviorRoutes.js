@@ -125,6 +125,20 @@ const upload = multer({
 
 /**
  * @swagger
+ * /api/behaviors/records/history:
+ *   get:
+ *     summary: Get logged-in teacher's incident history
+ *     tags: [Behaviors]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: List of the teacher's recent records and stats
+ */
+router.get('/records/history', authenticate, authorize('teacher', 'supervisor', 'admin'), behaviorController.getTeacherHistory);
+
+/**
+ * @swagger
  * /api/behaviors/records/pending:
  *   get:
  *     summary: Get all pending behavior records (Supervisor only)
