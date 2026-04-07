@@ -63,9 +63,14 @@ const Analytics = () => {
         
         <div className="flex items-center gap-4 bg-bgDark/60 p-5 rounded-3xl border border-white/5 shadow-2xl backdrop-blur-xl">
           <div className="flex -space-x-3">
-            {[1, 2, 3].map(i => (
+            {(topStudents || []).slice(0, 3).map((student, i) => (
               <div key={i} className="w-10 h-10 rounded-full border-2 border-bgDark overflow-hidden">
-                <img src={`https://i.pravatar.cc/100?img=${i+10}`} alt="user" className="w-full h-full object-cover" />
+                <img 
+                  src={student.photo_url || `https://ui-avatars.com/api/?name=${student.first_name}+${student.last_name}&background=6c5dd3&color=fff`} 
+                  alt={`${student.first_name} ${student.last_name}`} 
+                  title={`${student.first_name} ${student.last_name}`} 
+                  className="w-full h-full object-cover" 
+                />
               </div>
             ))}
           </div>

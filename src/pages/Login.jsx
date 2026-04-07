@@ -1,11 +1,12 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { LogIn, Phone, Lock, AlertCircle, Loader2, ChevronRight, Mail } from 'lucide-react';
+import { LogIn, Phone, Lock, AlertCircle, Loader2, ChevronRight, Mail, Eye, EyeOff } from 'lucide-react';
 
 const Login = () => {
   const [phone, setPhone] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
@@ -82,24 +83,26 @@ const Login = () => {
             </div>
 
             <div className="space-y-2">
-              <div className="flex justify-between items-center">
-                <label className="text-[10px] font-black text-secondaryClr uppercase tracking-widest pl-1">Password</label>
-                <Link to="/forgot-password" size={14} className="text-[10px] font-black text-primaryClr uppercase tracking-widest hover:underline">
-                  Forgot?
-                </Link>
-              </div>
+              <label className="text-[10px] font-black text-secondaryClr uppercase tracking-widest pl-1">Password</label>
               <div className="relative group">
                 <div className="absolute left-4 top-1/2 -translate-y-1/2 text-secondaryClr group-focus-within:text-primaryClr transition-colors">
                   <Lock size={18} />
                 </div>
                 <input
-                  type="password"
+                  type={showPassword ? "text" : "password"}
                   required
-                  className="input-field pl-12"
+                  className="input-field pl-12 pr-12"
                   placeholder="••••••••"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                 />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-4 top-1/2 -translate-y-1/2 text-secondaryClr hover:text-primaryClr transition-colors"
+                >
+                  {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                </button>
               </div>
             </div>
 
@@ -110,25 +113,33 @@ const Login = () => {
               </div>
             )}
 
-            <button
-              type="submit"
-              disabled={isLoading}
-              className="btn-primary w-full py-4 text-sm font-black uppercase tracking-widest flex items-center justify-center gap-3 group shadow-[0_10px_20px_rgba(108,93,211,0.3)] transition-all"
-            >
-              {isLoading ? (
-                <Loader2 className="animate-spin" size={20} />
-              ) : (
-                <>
-                  Enter Dashboard
-                  <ChevronRight size={18} className="group-hover:translate-x-1 transition-transform" />
-                </>
-              )}
-            </button>
+            <div className="space-y-4">
+              <button
+                type="submit"
+                disabled={isLoading}
+                className="btn-primary w-full py-4 text-sm font-black uppercase tracking-widest flex items-center justify-center gap-3 group shadow-[0_10px_20px_rgba(108,93,211,0.3)] transition-all"
+              >
+                {isLoading ? (
+                  <Loader2 className="animate-spin" size={20} />
+                ) : (
+                  <>
+                    Enter Dashboard
+                    <ChevronRight size={18} className="group-hover:translate-x-1 transition-transform" />
+                  </>
+                )}
+              </button>
+
+              <div className="text-center">
+                <Link to="/forgot-password" className="text-xs font-bold text-primaryClr hover:underline opacity-80 hover:opacity-100 transition-opacity">
+                  Forgotten your password?
+                </Link>
+              </div>
+            </div>
           </form>
 
           <div className="mt-8 pt-8 border-t border-white/5 text-center">
             <p className="text-secondaryClr text-[10px] font-medium leading-relaxed">
-              Proprietary behavior management system for Amana Model School.
+              Amana Model School.
               Unauthorized access is strictly prohibited.
             </p>
           </div>

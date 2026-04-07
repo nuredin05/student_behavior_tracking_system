@@ -227,16 +227,24 @@ const bulkImportStudents = async (req, res) => {
       classMap[key] = c.id;
     });
 
-    for (const row of results) {
-      // Handle both exact column names and lowercase variants
-      const admission_number = row.admission_number || row.Admission_Number || row['Admission Number'];
-      const first_name = row.first_name || row.First_Name || row['First Name'];
-      const last_name = row.last_name || row.Last_Name || row['Last Name'];
-      const gender = (row.gender || row.Gender || 'male').toLowerCase();
-      const date_of_birth = row.date_of_birth || row.Date_Of_Birth || row['Date of Birth'];
-      const parent_phone = row.parent_phone || row.Parent_Phone || row['Parent Phone'];
-      const grade = row.grade || row.Grade;
-      const section = row.section || row.Section;
+    for (const rawRow of results) {
+      // Normalize keys to lowercase with no spaces/underscores for robust matching
+      const row = {};
+      for (const key in rawRow) {
+        if (key) {
+          const normalizedKey = key.toLowerCase().replace(/[\s_]+/g, '');
+          row[normalizedKey] = rawRow[key];
+        }
+      }
+
+      const admission_number = row.admissionnumber;
+      const first_name = row.firstname;
+      const last_name = row.lastname;
+      const gender = (row.gender || 'male').toLowerCase();
+      const date_of_birth = row.dateofbirth;
+      const parent_phone = row.parentphone;
+      const grade = row.grade;
+      const section = row.section;
 
       if (!admission_number || !first_name || !last_name) {
         skipCount++;
