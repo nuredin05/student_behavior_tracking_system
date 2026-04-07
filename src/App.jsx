@@ -13,28 +13,18 @@ import StudentDetail from './pages/StudentDetail';
 import Analytics from './pages/Analytics';
 import Settings from './pages/Settings';
 import UserManagement from './pages/UserManagement';
+import ClassManagement from './pages/ClassManagement';
 import Layout from './components/Layout';
 
 const Dashboard = () => {
   const { user } = useAuth();
   
-  // Role-based dashboard content or redirect
+  // Role-based dashboard content redirection
   if (user?.role === 'teacher') return <TeacherDashboard />;
+  if (user?.role === 'officer') return <Navigate to="/register-student" replace />;
+  if (['supervisor', 'manager', 'admin'].includes(user?.role)) return <Navigate to="/analytics" replace />;
   
-  return (
-    <div className="animate-fadeInUp">
-      <h1 className="text-3xl font-bold text-primaryClr mb-4">Welcome back, {user?.first_name}!</h1>
-      <p className="text-secondaryClr text-lg mb-8">Access your tools and insights from the sidebar.</p>
-      
-      {/* Quick Stats Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <div className="glass-card p-6 border-l-4 border-primaryClr">
-          <p className="text-xs text-secondaryClr uppercase tracking-wider mb-1">Your Role</p>
-          <p className="text-xl font-bold capitalize">{user?.role}</p>
-        </div>
-      </div>
-    </div>
-  );
+  return <Navigate to="/settings" replace />;
 };
 
 // Route Protectors
@@ -123,6 +113,15 @@ function App() {
             element={
               <ProtectedRoute allowedRoles={['admin', 'supervisor']}>
                 <UserManagement />
+              </ProtectedRoute>
+            } 
+          />
+
+          <Route 
+            path="/school-structure" 
+            element={
+              <ProtectedRoute allowedRoles={['admin', 'supervisor']}>
+                <ClassManagement />
               </ProtectedRoute>
             } 
           />

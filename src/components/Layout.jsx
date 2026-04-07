@@ -12,6 +12,7 @@ import {
   Settings,
   LayoutDashboard,
   ShieldCheck,
+  School,
   Menu,
   X
 } from 'lucide-react';
@@ -69,6 +70,7 @@ const Layout = ({ children }) => {
     { name: 'Review Incidents', icon: ShieldCheck, path: '/review-incidents', roles: ['supervisor', 'admin'] },
     { name: 'Analytics', icon: BarChart3, path: '/analytics', roles: ['supervisor', 'manager'] },
     { name: 'User Management', icon: ShieldCheck, path: '/users', roles: ['admin', 'supervisor'] },
+    { name: 'School Structure', icon: School, path: '/school-structure', roles: ['admin', 'supervisor'] },
     { name: 'Settings', icon: Settings, path: '/settings', roles: ['officer', 'teacher', 'supervisor', 'manager', 'parent'] },
   ];
 

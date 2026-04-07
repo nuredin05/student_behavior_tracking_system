@@ -28,69 +28,88 @@ const Login = () => {
   };
 
   return (
-    <div className="min-h-screen bg-bgDarkAll flex items-center justify-center p-6 relative overflow-hidden">
-      {/* Background Decorative Gradients */}
-      <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-primaryClr/20 rounded-full blur-[120px] -mr-48 -mt-48 animate-pulse"></div>
-      <div className="absolute bottom-0 left-0 w-[400px] h-[400px] bg-primaryClrDark/30 rounded-full blur-[100px] -ml-32 -mb-32"></div>
+    <div className="min-h-screen w-full flex items-center justify-center p-4 relative overflow-hidden bg-bgDarkAll">
+      {/* Animated Mesh Gradient Background */}
+      <div className="absolute inset-0 z-0">
+        <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-primaryClr/20 rounded-full blur-[120px] animate-pulse"></div>
+        <div className="absolute bottom-[10%] right-[-5%] w-[30%] h-[30%] bg-accentClr/10 rounded-full blur-[100px] animate-bounce"></div>
+        <div className="absolute top-[20%] right-[10%] w-[20%] h-[20%] bg-primaryClr/5 rounded-full blur-[80px]"></div>
+      </div>
 
-      <div className="w-full max-w-md animate-fadeInUp">
-        <h1 className="text-3xl font-display font-bold text-primaryClrText mb-2 text-center">Amana Model Secondary School</h1>
-        <div className="glass-card">
-          <div className="text-center mb-10">
-            <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-primaryClr/20 text-primaryClr mb-6">
-              <img src="/icon.png" alt="logo" className='w-full h-full object-cover rounded-xl' />
+      <div className="w-full max-w-md relative z-10 animate-scaleIn">
+        {/* Branding Section */}
+        <div className="text-center mb-10 group">
+          <div className="inline-block relative">
+            <div className="absolute inset-0 bg-primaryClr blur-2xl opacity-20 group-hover:opacity-40 transition-opacity rounded-full"></div>
+            <div className="w-24 h-24 bg-white rounded-3xl mb-6 mx-auto flex items-center justify-center shadow-2xl relative z-10 border border-white/50 transform group-hover:rotate-3 transition-transform">
+              <img 
+                src="https://img.icons8.com/isometric/512/school.png" 
+                alt="Logo" 
+                className="w-16 h-16 object-contain"
+              />
             </div>
-            <h1 className="text-3xl font-display font-bold text-primaryClrText mb-2">Welcome Back</h1>
-            <p className="text-secondaryClr text-sm">Please enter your credentials to continue</p>
+          </div>
+          <h1 className="text-3xl font-display font-black text-primaryClr mb-2 tracking-tighter uppercase">
+            Amana Model
+          </h1>
+          <p className="text-secondaryClr text-sm font-bold uppercase tracking-[0.3em] opacity-80">
+            Secondary School
+          </p>
+        </div>
+
+        {/* Login Form */}
+        <div className="glass-card !p-10 border-t border-white/10 shadow-[0_20px_50px_rgba(0,0,0,0.5)]">
+          <div className="mb-8">
+            <h2 className="text-2xl font-bold text-primaryClrText mb-2">Welcome Back</h2>
+            <p className="text-secondaryClr text-sm">Please sign in to track behavior</p>
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-6">
-            <div>
-              <label className="block text-sm font-medium text-primaryClrText mb-2 flex items-center gap-2">
-                <Phone size={16} /> Phone Number
-              </label>
-              <input
-                type="text"
-                placeholder="0912345678"
-                className="input-field"
-                value={phone}
-                onChange={(e) => setPhone(e.target.value)}
-                required
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-primaryClrText mb-2 flex items-center gap-2">
-                <Lock size={16} /> Password
-              </label>
-              <input
-                type="password"
-                placeholder="********"
-                className="input-field"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-              />
-            </div>
-
-            {error && (
-              <div className="bg-dangerClr/10 border border-dangerClr/20 text-dangerClr p-4 rounded-xl flex items-center gap-3 text-sm animate-pulse">
-                <AlertCircle size={20} />
-                <span>{error}</span>
+            <div className="space-y-2">
+              <label className="text-xs font-black text-secondaryClr uppercase tracking-widest pl-1">Email Address</label>
+              <div className="relative group">
+                <div className="absolute left-4 top-1/2 -translate-y-1/2 text-secondaryClr group-focus-within:text-primaryClr transition-colors">
+                  <Mail size={18} />
+                </div>
+                <input
+                  type="email"
+                  required
+                  className="input-field pl-12"
+                  placeholder="staff@amana.edu"
+                  value={credentials.email}
+                  onChange={(e) => setCredentials({ ...credentials, email: e.target.value })}
+                />
               </div>
-            )}
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-xs font-black text-secondaryClr uppercase tracking-widest pl-1">Password</label>
+              <div className="relative group">
+                <div className="absolute left-4 top-1/2 -translate-y-1/2 text-secondaryClr group-focus-within:text-primaryClr transition-colors">
+                  <Lock size={18} />
+                </div>
+                <input
+                  type="password"
+                  required
+                  className="input-field pl-12"
+                  placeholder="••••••••"
+                  value={credentials.password}
+                  onChange={(e) => setCredentials({ ...credentials, password: e.target.value })}
+                />
+              </div>
+            </div>
 
             <button
               type="submit"
               disabled={isLoading}
-              className="btn-primary w-full py-4 flex items-center justify-center gap-2"
+              className="btn-primary w-full py-4 text-sm font-bold flex items-center justify-center gap-3 group shadow-[0_10px_20px_rgba(108,93,211,0.3)] transition-all hover:shadow-[0_15px_30px_rgba(108,93,211,0.5)]"
             >
               {isLoading ? (
-                <Loader2 size={24} className="animate-spin text-white" />
+                <Loader2 className="animate-spin" size={20} />
               ) : (
                 <>
-                  <LogIn size={20} />
-                  Sign In
+                  Enter Dashboard
+                  <ChevronRight size={18} className="group-hover:translate-x-1 transition-transform" />
                 </>
               )}
             </button>

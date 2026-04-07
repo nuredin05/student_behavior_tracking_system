@@ -90,6 +90,36 @@ const ReviewQueue = () => {
     }
   };
 
+  const [showActionModal, setShowActionModal] = useState(false);
+  const [activeRecord, setActiveRecord] = useState(null);
+  const [actionDone, setActionDone] = useState('');
+  const [actionSaving, setActionSaving] = useState(false);
+
+  const openActionModal = (record) => {
+    setActiveRecord(record);
+    setShowActionModal(true);
+  };
+
+  const submitAction = async (e) => {
+    e.preventDefault();
+    setActionSaving(true);
+    try {
+      await api.patch(`/behaviors/records/${activeRecord.id}/review`, { status: 'approved' });
+      await api.post('/interventions', {
+        behavior_id: activeRecord.id,
+        action_taken: actionDone
+      });
+      setRecords(prev => prev.filter(r => r.id !== activeRecord.id));
+      setShowActionModal(false);
+      setActionDone('');
+      setStatus({ type: 'success', message: 'Incident approved & action recorded successfully!' });
+    } catch (err) {
+      setStatus({ type: 'error', message: 'Failed to complete review' });
+    } finally {
+      setActionSaving(false);
+    }
+  };
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center py-32">
@@ -208,6 +238,13 @@ const ReviewQueue = () => {
                     {processingId === record.id ? <Loader2 size={18} className="animate-spin" /> : <ThumbsUp size={18} />}
                   </button>
                   <button
+                    onClick={() => openActionModal(record)}
+                    title="Approve with Action"
+                    className="w-11 h-11 rounded-xl bg-primaryClr/10 hover:bg-primaryClr text-primaryClr hover:text-white flex items-center justify-center transition-all duration-200"
+                  >
+                    <ListChecks size={18} />
+                  </button>
+                  <button
                     id={`reject-${record.id}`}
                     onClick={() => handleReview(record.id, 'rejected')}
                     disabled={processingId === record.id}
@@ -220,6 +257,39 @@ const ReviewQueue = () => {
               </div>
             </div>
           ))}
+        </div>
+      )}
+
+      {/* Action Recording Modal */}
+      {showActionModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-bgDarkAll/80 backdrop-blur-sm" onClick={() => setShowActionModal(false)}></div>
+          <div className="glass-card !p-0 w-full max-w-lg relative z-60 animate-scaleIn">
+            <div className="p-6 border-b border-white/5 flex items-center justify-between">
+              <h3 className="text-xl font-bold">Approve & Record Action</h3>
+              <button onClick={() => setShowActionModal(false)} className="text-secondaryClr"><X size={20} /></button>
+            </div>
+            <form onSubmit={submitAction} className="p-8 space-y-6">
+              <div className="p-4 bg-primaryClr/10 rounded-xl border border-primaryClr/20">
+                <p className="text-sm font-bold text-primaryClr">{activeRecord?.student_first_name} {activeRecord?.student_last_name}</p>
+                <p className="text-xs text-secondaryClr">{activeRecord?.category_name}</p>
+              </div>
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-secondaryClr uppercase tracking-widest">Action Taken</label>
+                <textarea 
+                  required
+                  className="input-field h-32 resize-none" 
+                  placeholder="e.g. Called parents and discussed the issue..."
+                  value={actionDone}
+                  onChange={(e) => setActionDone(e.target.value)}
+                />
+              </div>
+              <button type="submit" disabled={actionSaving} className="btn-primary w-full py-4 flex items-center justify-center gap-2">
+                {actionSaving ? <Loader2 className="animate-spin" /> : <Save size={20} />}
+                Confirm & Close Incident
+              </button>
+            </form>
+          </div>
         </div>
       )}
     </div>
@@ -625,12 +695,94 @@ const CategoryManagement = () => {
   );
 };
 
+const ActionPlans = () => {
+  const [interventions, setInterventions] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [showModal, setShowModal] = useState(false);
+  const [selectedRecord, setSelectedRecord] = useState(null);
+  const [actionText, setActionText] = useState('');
+  const [saving, setSaving] = useState(false);
+
+  const fetchInterventions = useCallback(async () => {
+    setIsLoading(true);
+    try {
+      const res = await api.get('/interventions');
+      setInterventions(res.data);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
+  useEffect(() => { fetchInterventions(); }, [fetchInterventions]);
+
+  const handleCreateAction = async (e) => {
+    e.preventDefault();
+    setSaving(true);
+    try {
+      await api.post('/interventions', {
+        behavior_id: selectedRecord.id,
+        action_taken: actionText
+      });
+      setShowModal(false);
+      setActionText('');
+      fetchInterventions();
+    } catch (err) {
+      alert(err.response?.data?.error || 'Failed to save action');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  if (isLoading) return <div className="flex justify-center py-20"><Loader2 className="animate-spin" /></div>;
+
+  return (
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <h2 className="text-2xl font-bold">Action Progress</h2>
+        <span className="text-secondaryClr text-sm">{interventions.length} Plans Active</span>
+      </div>
+
+      <div className="glass-card !p-0 overflow-hidden">
+        <table className="w-full text-left">
+          <thead className="bg-bgDark">
+            <tr className="border-b border-white/5">
+              <th className="p-6 text-xs font-bold uppercase tracking-widest text-secondaryClr">Student</th>
+              <th className="p-6 text-xs font-bold uppercase tracking-widest text-secondaryClr">Incident</th>
+              <th className="p-6 text-xs font-bold uppercase tracking-widest text-secondaryClr">Action Taken</th>
+              <th className="p-6 text-xs font-bold uppercase tracking-widest text-secondaryClr">Status</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-white/5">
+            {interventions.map(i => (
+              <tr key={i.id} className="hover:bg-white/5 transition-colors">
+                <td className="p-6 font-bold">{i.student_first_name} {i.student_last_name}</td>
+                <td className="p-6">
+                  <span className="text-secondaryClr">{i.category_name}</span>
+                </td>
+                <td className="p-6">{i.action_taken}</td>
+                <td className="p-6">
+                  <span className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase bg-accentClr/10 text-accentClr`}>
+                    {i.status}
+                  </span>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+};
+
 // ─── Main SupervisorDashboard ─────────────────────────────────────────────────
 
 const TABS = [
   { id: 'queue', label: 'Review Queue', icon: ShieldAlert },
   { id: 'overview', label: 'Overview', icon: BarChart3 },
   { id: 'categories', label: 'Categories', icon: Tag },
+  { id: 'actions', label: 'Action Plans', icon: ListChecks },
 ];
 
 const SupervisorDashboard = () => {
@@ -668,6 +820,7 @@ const SupervisorDashboard = () => {
         {activeTab === 'queue' && <ReviewQueue />}
         {activeTab === 'overview' && <Overview />}
         {activeTab === 'categories' && <CategoryManagement />}
+        {activeTab === 'actions' && <ActionPlans />}
       </div>
     </div>
   );

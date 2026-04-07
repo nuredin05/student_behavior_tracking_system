@@ -28,6 +28,9 @@ const TeacherDashboard = () => {
   const [evidence, setEvidence] = useState(null);
   const [preview, setPreview] = useState(null);
   
+  const [myHistory, setMyHistory] = useState([]);
+  const [todayCount, setTodayCount] = useState(0);
+  
   const [isLoading, setIsLoading] = useState(false);
   const [status, setStatus] = useState({ type: '', message: '' });
 
@@ -35,12 +38,15 @@ const TeacherDashboard = () => {
     // Initial data fetch
     const fetchData = async () => {
       try {
-        const [studentRes, catRes] = await Promise.all([
+        const [studentRes, catRes, historyRes] = await Promise.all([
           api.get('/students'),
-          api.get('/behaviors/categories')
+          api.get('/behaviors/categories'),
+          api.get('/behaviors/records/history')
         ]);
         setStudents(studentRes.data);
         setCategories(catRes.data);
+        setMyHistory(historyRes.data.history);
+        setTodayCount(historyRes.data.todayCount);
       } catch (error) {
         console.error('Error fetching dashboard data:', error);
       }
@@ -97,6 +103,11 @@ const TeacherDashboard = () => {
       setFormData({ points_applied: 0, comment: '', incident_date: new Date().toISOString().split('T')[0] });
       setEvidence(null);
       setPreview(null);
+      
+      // Refresh history
+      const historyRes = await api.get('/behaviors/records/history');
+      setMyHistory(historyRes.data.history);
+      setTodayCount(historyRes.data.todayCount);
     } catch (error) {
       setStatus({ type: 'error', message: error.response?.data?.error || 'Failed to log behavior' });
     } finally {
@@ -117,7 +128,7 @@ const TeacherDashboard = () => {
           </div>
           <div>
             <p className="text-xs text-secondaryClr uppercase tracking-wider">Your Logs Today</p>
-            <p className="text-xl font-bold">12 Records</p>
+            <p className="text-xl font-bold">{todayCount} Records</p>
           </div>
         </div>
       </div>
@@ -311,6 +322,61 @@ const TeacherDashboard = () => {
               </button>
             </form>
           </div>
+        </div>
+      </div>
+
+      {/* Recent History Table */}
+      <div className="glass-card !p-0 overflow-hidden">
+        <div className="p-6 border-b border-white/5">
+          <h3 className="text-xl font-bold flex items-center gap-2">
+            <History size={20} className="text-primaryClr" /> Recent Submissions
+          </h3>
+        </div>
+        <div className="overflow-x-auto">
+          <table className="w-full text-left">
+            <thead className="bg-bgDark">
+              <tr className="border-b border-white/5">
+                <th className="p-6 text-xs font-bold uppercase tracking-widest text-secondaryClr">Student</th>
+                <th className="p-6 text-xs font-bold uppercase tracking-widest text-secondaryClr">Behavior</th>
+                <th className="p-6 text-xs font-bold uppercase tracking-widest text-secondaryClr text-center">Points</th>
+                <th className="p-6 text-xs font-bold uppercase tracking-widest text-secondaryClr">Status</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-white/5">
+              {myHistory.map(h => (
+                <tr key={h.id} className="hover:bg-white/5 transition-colors">
+                  <td className="p-6">
+                    <p className="font-bold">{h.student_first_name} {h.student_last_name}</p>
+                    <p className="text-[10px] text-secondaryClr font-mono uppercase">{h.admission_number}</p>
+                  </td>
+                  <td className="p-6">
+                    <span className="text-sm font-medium">{h.category_name}</span>
+                  </td>
+                  <td className="p-6 text-center">
+                    <span className={`font-black ${h.points_applied >= 0 ? 'text-accentClr' : 'text-dangerClr'}`}>
+                      {h.points_applied >= 0 ? '+' : ''}{h.points_applied}
+                    </span>
+                  </td>
+                  <td className="p-6 text-sm">
+                    <span className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest ${
+                      h.status === 'approved' ? 'bg-accentClr/10 text-accentClr' :
+                      h.status === 'pending' ? 'bg-primaryClr/10 text-primaryClr' :
+                      'bg-dangerClr/10 text-dangerClr'
+                    }`}>
+                      {h.status}
+                    </span>
+                  </td>
+                </tr>
+              ))}
+              {myHistory.length === 0 && (
+                <tr>
+                  <td colSpan="4" className="p-12 text-center text-secondaryClr italic opacity-50">
+                    No behavior records logged yet.
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
         </div>
       </div>
     </div>

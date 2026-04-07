@@ -12,24 +12,48 @@ import {
   Clock,
   ChevronRight,
   Loader2,
-  FileText
+  FileText,
+  PlusCircle,
+  X,
+  Save,
+  Smile,
+  Frown,
+  Camera,
+  CheckCircle,
+  AlertCircle
 } from 'lucide-react';
 
 const StudentDetail = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-  const [data, setData] = useState(null);
+   const [data, setData] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
+
+  // Quick Log State
+  const [isLogging, setIsLogging] = useState(false);
+  const [categories, setCategories] = useState([]);
+  const [selectedCategory, setSelectedCategory] = useState(null);
+  const [formData, setFormData] = useState({
+    points_applied: 0,
+    comment: '',
+    incident_date: new Date().toISOString().split('T')[0],
+  });
+  const [evidence, setEvidence] = useState(null);
+  const [preview, setPreview] = useState(null);
+  const [logStatus, setLogStatus] = useState({ type: '', message: '' });
+  const [isSaving, setIsSaving] = useState(false);
 
   useEffect(() => {
     const fetchProfile = async () => {
       console.log('Frontend fetching profile for student ID:', id);
       try {
         const apiUrl = `/students/${id}/full-profile`;
-        console.log('Full API path being requested:', apiUrl);
-        const response = await api.get(apiUrl);
-        console.log('Response from API:', response.data);
-        setData(response.data);
+        const [profileRes, catRes] = await Promise.all([
+          api.get(apiUrl),
+          api.get('/behaviors/categories')
+        ]);
+        setData(profileRes.data);
+        setCategories(catRes.data);
       } catch (error) {
         console.error('Error fetching student profile:', error);
       } finally {
@@ -38,6 +62,36 @@ const StudentDetail = () => {
     };
     fetchProfile();
   }, [id]);
+
+  const handleLogBehavior = async (e) => {
+    e.preventDefault();
+    if (!selectedCategory) return;
+    setIsSaving(true);
+    setLogStatus({ type: '', message: '' });
+
+    const payload = new FormData();
+    payload.append('student_id', id);
+    payload.append('category_id', selectedCategory.id);
+    payload.append('points_applied', formData.points_applied);
+    payload.append('comment', formData.comment);
+    payload.append('incident_date', formData.incident_date);
+    if (evidence) payload.append('evidence', evidence);
+
+    try {
+      await api.post('/behaviors/records', payload, {
+        headers: { 'Content-Type': 'multipart/form-data' }
+      });
+      setLogStatus({ type: 'success', message: 'Behavior logged! Pending review.' });
+      setTimeout(() => {
+        setIsLogging(false);
+        setLogStatus({ type: '', message: '' });
+      }, 2000);
+    } catch (err) {
+      setLogStatus({ type: 'error', message: 'Failed to log behavior' });
+    } finally {
+      setIsSaving(false);
+    }
+  };
 
   if (isLoading) {
     return (
@@ -66,7 +120,12 @@ const StudentDetail = () => {
         </button>
         <div className="flex gap-3">
           <button className="btn-secondary px-4 py-2 text-xs">Print Report</button>
-          <button className="btn-primary px-4 py-2 text-xs">Log New Behavior</button>
+          <button 
+            onClick={() => setIsLogging(true)}
+            className="btn-primary px-4 py-2 text-xs flex items-center gap-2"
+          >
+            <PlusCircle size={14} /> Log Behavior
+          </button>
         </div>
       </div>
 
@@ -255,6 +314,129 @@ const StudentDetail = () => {
           </div>
         </div>
       </div>
+
+      {/* Quick Log Modal */}
+      {isLogging && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-bgDarkAll/80 backdrop-blur-md" onClick={() => setIsLogging(false)}></div>
+          <div className="glass-card !p-0 w-full max-w-2xl relative z-60 animate-scaleIn">
+            <div className="p-6 border-b border-white/5 flex items-center justify-between">
+              <h3 className="text-xl font-bold">Quick Log: {student.first_name}</h3>
+              <button onClick={() => setIsLogging(false)} className="text-secondaryClr"><X size={20} /></button>
+            </div>
+            
+            <form onSubmit={handleLogBehavior} className="p-8 space-y-6 max-h-[80vh] overflow-y-auto custom-scrollbar">
+              {/* Category Selection */}
+              <div className="space-y-4">
+                <label className="text-xs font-black text-secondaryClr uppercase tracking-widest">Select Behavior</label>
+                <div className="grid grid-cols-2 gap-3">
+                  {categories.map(cat => (
+                    <button
+                      key={cat.id}
+                      type="button"
+                      onClick={() => {
+                        setSelectedCategory(cat);
+                        setFormData({...formData, points_applied: cat.default_points});
+                      }}
+                      className={`p-4 rounded-2xl border text-left transition-all ${
+                        selectedCategory?.id === cat.id 
+                        ? 'bg-primaryClr border-primaryClr text-white shadow-xl scale-[1.02]' 
+                        : 'bg-bgDark border-white/5 text-secondaryClr hover:border-white/20'
+                      }`}
+                    >
+                      <div className="flex items-center gap-2 mb-1">
+                        {cat.type === 'positive' ? <Smile size={16} /> : <Frown size={16} />}
+                        <span className="font-bold text-sm">{cat.name}</span>
+                      </div>
+                      <p className="text-[10px] opacity-60 line-clamp-1">{cat.description || 'No description'}</p>
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {selectedCategory && (
+                <div className="animate-fadeIn space-y-6">
+                  <div className="grid grid-cols-2 gap-6">
+                    <div className="space-y-2">
+                      <label className="text-xs font-black text-secondaryClr uppercase tracking-widest">Points Applied</label>
+                      <input 
+                        type="number" 
+                        className="input-field"
+                        value={formData.points_applied}
+                        onChange={(e) => setFormData({...formData, points_applied: parseInt(e.target.value)})}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-xs font-black text-secondaryClr uppercase tracking-widest">Date</label>
+                      <input 
+                        type="date" 
+                        className="input-field"
+                        value={formData.incident_date}
+                        onChange={(e) => setFormData({...formData, incident_date: e.target.value})}
+                      />
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="text-xs font-black text-secondaryClr uppercase tracking-widest">Evidence Photo (Optional)</label>
+                    <div className="flex gap-4">
+                      <label className="flex-1 h-32 border-2 border-dashed border-white/5 rounded-2xl flex flex-col items-center justify-center cursor-pointer hover:border-primaryClr/20 transition-all bg-bgDark">
+                        {preview ? (
+                          <img src={preview} alt="preview" className="h-full w-full object-cover rounded-2xl" />
+                        ) : (
+                          <>
+                            <Camera className="text-secondaryClr mb-2" size={32} />
+                            <span className="text-xs text-secondaryClr">Upload Evidence</span>
+                          </>
+                        )}
+                        <input 
+                          type="file" 
+                          hidden 
+                          accept="image/*"
+                          onChange={(e) => {
+                            const file = e.target.files[0];
+                            if (file) {
+                              setEvidence(file);
+                              setPreview(URL.createObjectURL(file));
+                            }
+                          }}
+                        />
+                      </label>
+                      <div className="flex-1 space-y-2">
+                         <label className="text-xs font-black text-secondaryClr uppercase tracking-widest">Comments</label>
+                         <textarea 
+                           className="input-field h-[104px] resize-none"
+                           placeholder="Additional details..."
+                           value={formData.comment}
+                           onChange={(e) => setFormData({...formData, comment: e.target.value})}
+                         />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {logStatus.message && (
+                <div className={`p-4 rounded-xl flex items-center gap-3 text-sm ${
+                  logStatus.type === 'success' ? 'bg-accentClr/10 text-accentClr border border-accentClr/20' : 'bg-dangerClr/10 text-dangerClr border border-dangerClr/20'
+                }`}>
+                  {logStatus.type === 'success' ? <CheckCircle size={18} /> : <AlertCircle size={18} />}
+                  {logStatus.message}
+                </div>
+              )}
+
+              <button 
+                type="submit" 
+                disabled={isSaving || !selectedCategory}
+                className="btn-primary w-full py-4 flex items-center justify-center gap-2 disabled:opacity-50 disabled:grayscale"
+              >
+                {isSaving ? <Loader2 className="animate-spin" /> : <Save size={20} />}
+                Confirm Log Entry
+              </button>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
