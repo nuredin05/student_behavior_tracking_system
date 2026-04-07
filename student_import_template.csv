@@ -1,0 +1,4 @@
+admission_number,first_name,last_name,gender,date_of_birth
+STU-001,John,Doe,male,2010-05-15
+STU-002,Jane,Smith,female,2011-08-20
+STU-003,Michael,Jackson,male,2010-12-01

@@ -1,5 +1,7 @@
 const db = require('../config/db');
 const { v4: uuidv4 } = require('uuid');
+const fs = require('fs');
+const csv = require('csv-parser');
 
 const getAllStudents = async (req, res) => {
   try {
@@ -164,11 +166,73 @@ const deleteStudent = async (req, res) => {
   }
 };
 
+const bulkImportStudents = (req, res) => {
+  if (!req.file) {
+    return res.status(400).json({ error: 'CSV file is required.' });
+  }
+
+  const officerId = req.user.id;
+  const results = [];
+  let successCount = 0;
+  let skipCount = 0;
+
+  fs.createReadStream(req.file.path)
+    .pipe(csv())
+    .on('data', (data) => results.push(data))
+    .on('end', async () => {
+      try {
+        for (const row of results) {
+          const { admission_number, first_name, last_name, gender, date_of_birth, class_id } = row;
+
+          if (!admission_number || !first_name || !last_name) {
+            skipCount++;
+            continue;
+          }
+
+          const [existing] = await db.query('SELECT id FROM students WHERE admission_number = ?', [admission_number]);
+          if (existing.length > 0) {
+            skipCount++;
+            continue; // Skip duplicates
+          }
+
+          const studentId = uuidv4();
+          await db.query(`
+            INSERT INTO students (id, admission_number, first_name, last_name, gender, date_of_birth, class_id, registered_by)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+          `, [
+            studentId, 
+            admission_number, 
+            first_name, 
+            last_name, 
+            gender || null, 
+            date_of_birth || null, 
+            class_id || null, 
+            officerId
+          ]);
+          successCount++;
+        }
+        
+        // Clean up temp file
+        fs.unlink(req.file.path, (err) => { if(err) console.error(err); });
+
+        res.status(200).json({ message: 'Import complete', successCount, skipCount });
+      } catch (error) {
+        console.error('Bulk import error:', error);
+        res.status(500).json({ error: 'Bulk import logic failed' });
+      }
+    })
+    .on('error', (err) => {
+      console.error('CSV parse error:', err);
+      res.status(500).json({ error: 'Failed to parse CSV' });
+    });
+};
+
 module.exports = {
   getAllStudents,
   getStudentById,
   getStudentFullProfile,
   createStudent,
   updateStudent,
-  deleteStudent
+  deleteStudent,
+  bulkImportStudents
 };

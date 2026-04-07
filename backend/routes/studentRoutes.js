@@ -17,24 +17,27 @@ const storage = multer.diskStorage({
 
 const upload = multer({ 
   storage,
-  limits: { fileSize: 5 * 1024 * 1024 }, // 5MB limit
+  limits: { fileSize: 10 * 1024 * 1024 }, // 10MB limit
   fileFilter: (req, file, cb) => {
-    const filetypes = /jpeg|jpg|png/;
+    const filetypes = /jpeg|jpg|png|csv/;
     const extname = filetypes.test(path.extname(file.originalname).toLowerCase());
-    const mimetype = filetypes.test(file.mimetype);
-    if (mimetype && extname) return cb(null, true);
-    cb(new Error('Images only (jpeg, jpg, png)!'));
+    
+    if (extname) return cb(null, true);
+    cb(new Error('Invalid file type! Allowed: jpeg, jpg, png, csv'));
   }
 });
 
 // GET all students
 router.get('/', authenticate, studentController.getAllStudents);
 
-// GET full profile (must be defined BEFORE /:id to avoid shadowing)
+// GET full profile
 router.get('/:id/full-profile', authenticate, studentController.getStudentFullProfile);
 
 // GET single student by ID
 router.get('/:id', authenticate, studentController.getStudentById);
+
+// POST bulk import student CSV (Officer, Supervisor, Admin)
+router.post('/bulk', authenticate, authorize('officer', 'supervisor', 'admin'), upload.single('csv_file'), studentController.bulkImportStudents);
 
 // POST create student (Officer, Supervisor, Admin)
 router.post('/', authenticate, authorize('officer', 'supervisor', 'admin'), upload.single('photo'), (req, res, next) => {

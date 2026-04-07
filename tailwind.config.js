@@ -11,20 +11,19 @@ export default {
     extend: {
       colors: {
         // Primary brand colors from logo
-        primaryClr: "#8C4830",       // deep black for text/nav B45309
-        primaryClrLight: "#A65B4B",  // softer black/charcoal for hover states c88653
+        primaryClr: "#031f54",       // deep black for text/nav B45309
+        primaryClrLight: "#2d4b83ff",  // softer black/charcoal for hover states c88653
         primaryClrDark: '#59331D',//#59331D 4c2000
-        primaryClrText: '#f7f9fc',
+        primaryClrText: '#031f54',
         place: "605853",
 
         // Background neutral
-        backgroundClr: "#D9D1D0",    // light ivory/neutral background
-        bgDark: "#414144ff",
-        bgDarkAll: "#393A3F",
-        bgLight: "#FFFFFF",
+        backgroundClr: "#b4d4dfff",    // light ivory/neutral background
+        bgDark: "#eeeef3ff",
+        bgDarkAll: "#b4d4dfff",
         // Secondary accent (gold from logo)
-        secondaryClr: "#C9AE9B",     // muted gold accent
-        secondaryClrDark: "#B7937C", // darker gold for hover/active
+        secondaryClr: "#2d4b83ff",     // muted gold accent
+        secondaryClrDark: "#2d4b83ff", // darker gold for hover/active
 
         // Success/confirmation accent
         accentClr: "#22e950ff",        // keep green for status badges

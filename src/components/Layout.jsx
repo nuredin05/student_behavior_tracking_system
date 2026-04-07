@@ -11,7 +11,9 @@ import {
   Bell, 
   Settings,
   LayoutDashboard,
-  ShieldCheck
+  ShieldCheck,
+  Menu,
+  X
 } from 'lucide-react';
 
 const Layout = ({ children }) => {
@@ -21,6 +23,12 @@ const Layout = ({ children }) => {
   const [notifications, setNotifications] = useState([]);
   const [showNotifications, setShowNotifications] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+
+  // Close mobile menu on route change
+  useEffect(() => {
+    setIsMobileMenuOpen(false);
+  }, [location.pathname]);
 
   useEffect(() => {
     if (user) {
@@ -67,10 +75,28 @@ const Layout = ({ children }) => {
   const filteredNav = navItems.filter(item => item.roles.includes(user?.role));
 
   return (
-    <div className="flex h-screen bg-bgDarkAll text-primaryClrText overflow-hidden" onClick={() => setShowNotifications(false)}>
+    <div className="flex h-screen w-full bg-bgDarkAll text-primaryClrText overflow-hidden" onClick={() => setShowNotifications(false)}>
+      
+      {/* Mobile Menu Backdrop */}
+      {isMobileMenuOpen && (
+        <div 
+          className="fixed inset-0 bg-black/60 backdrop-blur-sm z-40 lg:hidden transition-opacity"
+          onClick={() => setIsMobileMenuOpen(false)}
+        />
+      )}
+
       {/* Sidebar */}
-      <aside className="w-72 bg-bgDark border-r border-white/5 flex flex-col" onClick={e => e.stopPropagation()}>
-        <div className="p-8">
+      <aside 
+        className={`fixed inset-y-0 left-0 z-50 w-72 bg-bgDark border-r border-white/5 flex flex-col transform transition-transform duration-300 lg:static lg:translate-x-0 ${isMobileMenuOpen ? 'translate-x-0 shadow-2xl shadow-black/50' : '-translate-x-full'}`} 
+        onClick={e => e.stopPropagation()}
+      >
+        <div className="p-8 relative">
+          <button 
+            className="absolute top-8 right-6 lg:hidden text-secondaryClr hover:text-white"
+            onClick={() => setIsMobileMenuOpen(false)}
+          >
+            <X size={24} />
+          </button>
           <div className="flex items-center gap-3 px-2 mb-8 cursor-pointer" onClick={() => navigate('/dashboard')}>
             <div className="w-10 h-10 rounded-xl bg-primaryClr flex items-center justify-center text-white font-bold text-xl">
               S
@@ -108,11 +134,17 @@ const Layout = ({ children }) => {
       </aside>
 
       {/* Main Content */}
-      <main className="flex-1 flex flex-col overflow-hidden relative">
+      <main className="flex-1 flex flex-col h-screen min-w-0 overflow-hidden relative">
         {/* Topbar */}
-        <header className="h-20 bg-bgDark/40 backdrop-blur-md border-b border-white/5 flex items-center justify-between px-8 z-20">
-          <div>
-            <h2 className="text-sm font-medium text-secondaryClr uppercase tracking-widest">
+        <header className="h-20 bg-bgDark/40 backdrop-blur-md border-b border-white/5 flex items-center justify-between px-4 md:px-8 z-20">
+          <div className="flex items-center gap-4">
+            <button 
+              className="lg:hidden p-2 text-secondaryClr hover:text-primaryClrText transition-colors"
+              onClick={(e) => { e.stopPropagation(); setIsMobileMenuOpen(true); }}
+            >
+              <Menu size={24} />
+            </button>
+            <h2 className="text-sm font-medium text-secondaryClr uppercase tracking-widest hidden sm:block truncate max-w-[200px] md:max-w-none">
               Overview / {location.pathname.split('/')[1]?.replace('-', ' ') || 'Dashboard'}
             </h2>
           </div>
@@ -177,8 +209,8 @@ const Layout = ({ children }) => {
               )}
             </div>
 
-            <div className="flex items-center gap-4 bg-bgDarkAll/50 px-4 py-2 rounded-2xl border border-white/5">
-              <div className="text-right">
+            <div className="flex items-center gap-3 md:gap-4 lg:bg-bgDarkAll/50 px-2 md:px-4 py-2 rounded-2xl lg:border lg:border-white/5">
+              <div className="hidden lg:block text-right">
                 <p className="text-sm font-semibold">{user?.first_name} {user?.last_name}</p>
                 <p className="text-xs text-secondaryClr capitalize">{user?.role}</p>
               </div>
