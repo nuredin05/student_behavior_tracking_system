@@ -11,8 +11,8 @@ export default {
     extend: {
       colors: {
         // Primary brand colors from logo
-        primaryClr: "#8C4830   ",       // deep black for text/nav B45309
-        primaryClrLight: "#A65B4B ",  // softer black/charcoal for hover states c88653
+        primaryClr: "#8C4830",       // deep black for text/nav B45309
+        primaryClrLight: "#A65B4B",  // softer black/charcoal for hover states c88653
         primaryClrDark: '#59331D',//#59331D 4c2000
         primaryClrText: '#f7f9fc',
         place: "605853",

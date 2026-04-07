@@ -37,6 +37,57 @@ const getStudentById = async (req, res) => {
   }
 };
 
+const getStudentFullProfile = async (req, res) => {
+  const { id } = req.params;
+  console.log('Fetching full profile for student ID:', id);
+  try {
+    // 1. Get Student Info
+    const [student] = await db.query(`
+      SELECT s.*, c.grade_level, c.section 
+      FROM students s 
+      LEFT JOIN classes c ON s.class_id = c.id
+      WHERE s.id = ?
+    `, [id]);
+
+    console.log('Student query result rows:', student.length);
+
+    if (student.length === 0) {
+      console.warn('Student not found in DB for ID:', id);
+      return res.status(404).json({ error: 'Student not found' });
+    }
+
+    // 2. Get Behavior History (Ordered by date)
+    const [history] = await db.query(`
+      SELECT b.*, bc.name as category_name, bc.type as category_type, 
+             u.first_name as teacher_first_name, u.last_name as teacher_last_name 
+      FROM behavior_records b
+      JOIN behavior_categories bc ON b.category_id = bc.id
+      JOIN users u ON b.recorded_by = u.id
+      WHERE b.student_id = ? AND b.status = 'approved'
+      ORDER BY b.incident_date DESC, b.created_at DESC
+    `, [id]);
+
+    // 3. Get Active Interventions
+    const [interventions] = await db.query(`
+      SELECT i.*, u.first_name as creator_first_name, u.last_name as creator_last_name
+      FROM interventions i
+      JOIN users u ON i.created_by = u.id
+      JOIN behavior_records b ON i.behavior_id = b.id
+      WHERE b.student_id = ?
+      ORDER BY i.created_at DESC
+    `, [id]);
+
+    res.json({
+      student: student[0],
+      history,
+      interventions
+    });
+  } catch (error) {
+    console.error('Error fetching student full profile:', error);
+    res.status(500).json({ error: 'Internal Server Error' });
+  }
+};
+
 // Create a new student (Officer task)
 const createStudent = async (req, res) => {
   const { admission_number, first_name, last_name, date_of_birth, gender, class_id, photo_url } = req.body;
@@ -116,6 +167,7 @@ const deleteStudent = async (req, res) => {
 module.exports = {
   getAllStudents,
   getStudentById,
+  getStudentFullProfile,
   createStudent,
   updateStudent,
   deleteStudent

@@ -1,5 +1,6 @@
 const db = require('../config/db');
 const { v4: uuidv4 } = require('uuid');
+const { createNotification } = require('./notificationController');
 
 // ----- CATEGORY MANAGEMENT -----
 
@@ -95,6 +96,18 @@ const logBehavior = async (req, res) => {
       VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'pending')
     `, [recordId, student_id, category_id, recorded_by, points_applied, comment || null, date, evidence_url || null]);
 
+    // Notify Supervisors
+    const [supervisors] = await db.query("SELECT id FROM users WHERE role = 'supervisor' AND is_active = true");
+    for (const sup of supervisors) {
+      await createNotification(
+        sup.id, 
+        'New Incident Pending', 
+        `A new behavior record has been logged and requires your review.`,
+        'incident',
+        recordId
+      );
+    }
+
     res.status(201).json({ message: 'Behavior logged successfully. Pending supervisor review.', id: recordId });
   } catch (error) {
     console.error('Error logging behavior:', error);
@@ -167,6 +180,18 @@ const reviewBehavior = async (req, res) => {
       `, [record.points_applied, record.student_id]);
     }
 
+    // 4. Notify Teacher of the decision
+    const [teacher] = await connection.query('SELECT recorded_by FROM behavior_records WHERE id = ?', [id]);
+    if (teacher.length > 0) {
+      await createNotification(
+        teacher[0].recorded_by,
+        `Incident ${status.charAt(0).toUpperCase() + status.slice(1)}`,
+        `Your behavior record submission has been ${status} by the supervisor.`,
+        'incident',
+        id
+      );
+    }
+
     await connection.commit();
     res.json({ message: `Behavior record ${status} successfully` });
   } catch (error) {
@@ -229,6 +254,84 @@ const getSupervisorStats = async (req, res) => {
   }
 };
 
+// Detailed Analytics Summary
+const getAnalyticsSummary = async (req, res) => {
+  try {
+    // 1. 30-Day Activity Trend
+    const [activityTrend] = await db.query(`
+      SELECT DATE(br.created_at) as date,
+             SUM(CASE WHEN bc.type = 'positive' THEN 1 ELSE 0 END) as positive,
+             SUM(CASE WHEN bc.type = 'negative' THEN 1 ELSE 0 END) as negative
+      FROM behavior_records br
+      JOIN behavior_categories bc ON br.category_id = bc.id
+      WHERE br.created_at >= DATE_SUB(NOW(), INTERVAL 30 DAY)
+      GROUP BY DATE(br.created_at)
+      ORDER BY date ASC
+    `);
+
+    // 2. Student Leaderboard (Top 10)
+    const [topStudents] = await db.query(`
+      SELECT id, first_name, last_name, admission_number, current_points, photo_url
+      FROM students
+      WHERE status = 'active'
+      ORDER BY current_points DESC
+      LIMIT 10
+    `);
+
+    // 3. At-Risk Students (Bottom 10)
+    const [lowStudents] = await db.query(`
+      SELECT id, first_name, last_name, admission_number, current_points, photo_url
+      FROM students
+      WHERE status = 'active'
+      ORDER BY current_points ASC
+      LIMIT 10
+    `);
+
+    // 4. Category Distribution (Pie Chart)
+    const [categoryStats] = await db.query(`
+      SELECT bc.name, bc.type, COUNT(br.id) as count
+      FROM behavior_records br
+      JOIN behavior_categories bc ON br.category_id = bc.id
+      GROUP BY bc.id, bc.name, bc.type
+      ORDER BY count DESC
+    `);
+
+    // 5. Grade Level Comparison
+    const [gradeStats] = await db.query(`
+      SELECT c.grade_level, 
+             AVG(s.current_points) as avg_points,
+             COUNT(br.id) as incident_count
+      FROM classes c
+      JOIN students s ON s.class_id = c.id
+      LEFT JOIN behavior_records br ON br.student_id = s.id
+      GROUP BY c.grade_level
+      ORDER BY c.grade_level ASC
+    `);
+
+    // 6. Impact Overview
+    const [impactOverview] = await db.query(`
+      SELECT 
+        SUM(CASE WHEN bc.type = 'positive' THEN 1 ELSE 0 END) as total_positive,
+        SUM(CASE WHEN bc.type = 'negative' THEN 1 ELSE 0 END) as total_negative,
+        COUNT(*) as total_logs
+      FROM behavior_records br
+      JOIN behavior_categories bc ON br.category_id = bc.id
+    `);
+
+    res.json({
+      activityTrend,
+      topStudents,
+      lowStudents,
+      categoryStats,
+      gradeStats,
+      impact: impactOverview[0]
+    });
+  } catch (error) {
+    console.error('Error fetching analytics summary:', error);
+    res.status(500).json({ error: 'Internal Server Error' });
+  }
+};
+
 module.exports = {
   getBehaviorCategories,
   createCategory,
@@ -236,5 +339,6 @@ module.exports = {
   logBehavior,
   reviewBehavior,
   getPendingRecords,
-  getSupervisorStats
+  getSupervisorStats,
+  getAnalyticsSummary
 };

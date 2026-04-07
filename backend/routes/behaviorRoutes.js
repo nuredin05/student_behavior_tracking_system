@@ -139,6 +139,34 @@ router.get('/records/pending', authenticate, authorize('supervisor', 'admin'), b
 
 /**
  * @swagger
+ * /api/behaviors/stats:
+ *   get:
+ *     summary: Get supervisor overview stats
+ *     tags: [Behaviors]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Stats for supervisor overview
+ */
+router.get('/stats', authenticate, authorize('supervisor', 'admin'), behaviorController.getSupervisorStats);
+
+/**
+ * @swagger
+ * /api/behaviors/analytics:
+ *   get:
+ *     summary: Get detailed behavior analytics
+ *     tags: [Behaviors]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Analytical data for charts and leaderboards
+ */
+router.get('/analytics', authenticate, authorize('supervisor', 'admin'), behaviorController.getAnalyticsSummary);
+
+/**
+ * @swagger
  * /api/behaviors/records:
  *   post:
  *     summary: Log a student behavior (Teacher task)

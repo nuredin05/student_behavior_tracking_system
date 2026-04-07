@@ -31,12 +31,53 @@ const register = async (req, res) => {
     );
 
     res.status(201).json({
-      message: 'Registration successful',
-      token,
+      message: 'User registered successfully',
       user: { id: userId, phone, first_name, last_name, role }
     });
   } catch (error) {
     console.error('Registration error:', error);
+    res.status(500).json({ error: 'Internal Server Error' });
+  }
+};
+
+// Fetch all users for management (Admin/Supervisor only)
+const getAllUsers = async (req, res) => {
+  try {
+    const [users] = await db.query(`
+      SELECT id, phone, email, role, first_name, last_name, profile_picture, is_active, last_login, created_at 
+      FROM users 
+      ORDER BY created_at DESC
+    `);
+    res.json(users);
+  } catch (error) {
+    console.error('Error fetching users:', error);
+    res.status(500).json({ error: 'Internal Server Error' });
+  }
+};
+
+// Update user details (Role, Status, etc.)
+const updateUser = async (req, res) => {
+  const { id } = req.params;
+  const { role, is_active, first_name, last_name, email } = req.body;
+
+  try {
+    const [result] = await db.query(`
+      UPDATE users 
+      SET role = COALESCE(?, role),
+          is_active = COALESCE(?, is_active),
+          first_name = COALESCE(?, first_name),
+          last_name = COALESCE(?, last_name),
+          email = COALESCE(?, email)
+      WHERE id = ?
+    `, [role, is_active, first_name, last_name, email, id]);
+
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    res.json({ message: 'User updated successfully' });
+  } catch (error) {
+    console.error('Error updating user:', error);
     res.status(500).json({ error: 'Internal Server Error' });
   }
 };
@@ -90,4 +131,4 @@ const logout = async (req, res) => {
   res.json({ message: 'Logged out successfully' });
 };
 
-module.exports = { login, register, logout };
+module.exports = { login, register, logout, getAllUsers, updateUser };

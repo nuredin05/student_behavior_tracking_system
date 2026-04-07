@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const authController = require('../controllers/authController');
-const { authenticate } = require('../middlewares/authMiddleware');
+const { authenticate, authorize } = require('../middlewares/authMiddleware');
 
 /**
  * @swagger
@@ -42,40 +42,33 @@ router.post('/login', authController.login);
  *   post:
  *     summary: Register a new User
  *     tags: [Auth]
- *     description: Creates a new user with a specified role.
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             required:
- *               - first_name
- *               - last_name
- *               - email
- *               - password
- *               - role
- *             properties:
- *               first_name:
- *                 type: string
- *               last_name:
- *                 type: string
- *               email:
- *                 type: string
- *               password:
- *                 type: string
- *               role:
- *                 type: string
- *                 enum: [admin, supervisor, teacher, parent]
- *               phone:
- *                 type: string
- *     responses:
- *       201:
- *         description: Registration successful
- *       400:
- *         description: Bad request or user already exists
+ *     security:
+ *       - bearerAuth: []
+ *     description: Creates a new user. Restricted to Admins and Supervisors.
  */
-router.post('/register', authController.register);
+router.post('/register', authenticate, authorize('admin', 'supervisor'), authController.register);
+
+/**
+ * @swagger
+ * /api/auth/users:
+ *   get:
+ *     summary: List all users
+ *     tags: [Auth]
+ *     security:
+ *       - bearerAuth: []
+ */
+router.get('/users', authenticate, authorize('admin', 'supervisor'), authController.getAllUsers);
+
+/**
+ * @swagger
+ * /api/auth/users/{id}:
+ *   patch:
+ *     summary: Update user profile or status
+ *     tags: [Auth]
+ *     security:
+ *       - bearerAuth: []
+ */
+router.patch('/users/:id', authenticate, authorize('admin', 'supervisor'), authController.updateUser);
 
 /**
  * @swagger

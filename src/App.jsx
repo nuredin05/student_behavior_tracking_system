@@ -8,10 +8,19 @@ import Login from './pages/Login';
 import OfficerDashboard from './pages/OfficerDashboard';
 import TeacherDashboard from './pages/TeacherDashboard';
 import SupervisorDashboard from './pages/SupervisorDashboard';
+import Students from './pages/Students';
+import StudentDetail from './pages/StudentDetail';
+import Analytics from './pages/Analytics';
+import Settings from './pages/Settings';
+import UserManagement from './pages/UserManagement';
 import Layout from './components/Layout';
 
 const Dashboard = () => {
   const { user } = useAuth();
+  
+  // Role-based dashboard content or redirect
+  if (user?.role === 'teacher') return <TeacherDashboard />;
+  
   return (
     <div className="animate-fadeInUp">
       <h1 className="text-3xl font-bold text-primaryClr mb-4">Welcome back, {user?.first_name}!</h1>
@@ -65,19 +74,55 @@ function App() {
           />
 
           <Route 
-            path="/dashboard" 
+            path="/review-incidents" 
             element={
-              <ProtectedRoute allowedRoles={['teacher']}>
-                <TeacherDashboard />
+              <ProtectedRoute allowedRoles={['supervisor', 'admin']}>
+                <SupervisorDashboard />
               </ProtectedRoute>
             } 
           />
 
           <Route 
-            path="/review-incidents" 
+            path="/students" 
             element={
-              <ProtectedRoute allowedRoles={['supervisor', 'admin']}>
-                <SupervisorDashboard />
+              <ProtectedRoute allowedRoles={['officer', 'teacher', 'supervisor', 'manager']}>
+                <Students />
+              </ProtectedRoute>
+            } 
+          />
+
+          <Route 
+            path="/students/:id" 
+            element={
+              <ProtectedRoute allowedRoles={['officer', 'teacher', 'supervisor', 'manager']}>
+                <StudentDetail />
+              </ProtectedRoute>
+            } 
+          />
+
+          <Route 
+            path="/analytics" 
+            element={
+              <ProtectedRoute allowedRoles={['supervisor', 'admin', 'manager']}>
+                <Analytics />
+              </ProtectedRoute>
+            } 
+          />
+
+          <Route 
+            path="/settings" 
+            element={
+              <ProtectedRoute>
+                <Settings />
+              </ProtectedRoute>
+            } 
+          />
+
+          <Route 
+            path="/users" 
+            element={
+              <ProtectedRoute allowedRoles={['admin', 'supervisor']}>
+                <UserManagement />
               </ProtectedRoute>
             } 
           />

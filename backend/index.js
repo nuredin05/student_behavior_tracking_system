@@ -10,6 +10,7 @@ const authRoutes = require('./routes/authRoutes');
 const studentRoutes = require('./routes/studentRoutes');
 const interventionRoutes = require('./routes/interventionRoutes');
 const schoolRoutes = require('./routes/schoolRoutes');
+const notificationRoutes = require('./routes/notificationRoutes');
 
 const app = express();
 
@@ -17,7 +18,14 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-app.use('/uploads', express.static('uploads')); // Serve uploaded files
+
+// Request Logger
+app.use((req, res, next) => {
+  console.log(`[${new Date().toISOString()}] ${req.method} ${req.url}`);
+  next();
+});
+
+app.use('/uploads', express.static('uploads'));
 
 /// Swagger Configuration
 const swaggerOptions = {
@@ -69,6 +77,8 @@ app.use('/api/auth', authRoutes);
 app.use('/api/students', studentRoutes);
 app.use('/api/interventions', interventionRoutes);
 app.use('/api/school', schoolRoutes);
+app.use('/api/notifications', notificationRoutes);
+
 
 const PORT = process.env.PORT || 5000;
 
