@@ -331,24 +331,24 @@ const downloadStudentTemplate = async (req, res) => {
   try {
     const data = [
       {
-        admission_number: "STU-001",
-        first_name: "John",
-        last_name: "Doe",
-        gender: "male",
-        date_of_birth: "2010-05-15",
-        parent_phone: "0911223344",
-        grade: "9",
-        section: "A"
+        "Admission Number": "STU-001",
+        "First Name": "John",
+        "Last Name": "Doe",
+        "Gender": "male",
+        "Date of Birth": "2010-05-15",
+        "Parent Phone": "0911223344",
+        "Grade": "9",
+        "Section": "A"
       },
       {
-        admission_number: "STU-002",
-        first_name: "Jane",
-        last_name: "Smith",
-        gender: "female",
-        date_of_birth: "2011-08-20",
-        parent_phone: "0922334455",
-        grade: "10",
-        section: "B"
+        "Admission Number": "STU-002",
+        "First Name": "Jane",
+        "Last Name": "Smith",
+        "Gender": "female",
+        "Date of Birth": "2011-08-20",
+        "Parent Phone": "0922334455",
+        "Grade": "10",
+        "Section": "B"
       }
     ];
 
