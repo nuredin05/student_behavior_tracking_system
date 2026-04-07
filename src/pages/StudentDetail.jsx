@@ -130,7 +130,12 @@ const StudentDetail = () => {
               <Trophy size={14} /> Generate Certificate
             </button>
           )}
-          <button className="btn-secondary px-4 py-2 text-xs">Print Report</button>
+          <button 
+            onClick={() => navigate(`/report/${id}`)}
+            className="btn-secondary px-4 py-2 text-xs"
+          >
+            Print Report
+          </button>
           <button 
             onClick={() => setIsLogging(true)}
             className="btn-primary px-4 py-2 text-xs flex items-center gap-2"

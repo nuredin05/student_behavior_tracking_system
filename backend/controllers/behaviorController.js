@@ -368,9 +368,9 @@ const getCertificateData = async (req, res) => {
   const { studentId } = req.params;
   try {
     const [students] = await db.query(`
-      SELECT s.*, c.name as class_name, c.grade_level, c.section, u.first_name as teacher_first_name, u.last_name as teacher_last_name
+      SELECT s.*, c.grade_level, c.section, u.first_name as teacher_first_name, u.last_name as teacher_last_name
       FROM students s
-      JOIN classes c ON s.class_id = c.id
+      LEFT JOIN classes c ON s.class_id = c.id
       LEFT JOIN users u ON c.teacher_id = u.id
       WHERE s.id = ?
     `, [studentId]);

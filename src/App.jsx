@@ -17,6 +17,7 @@ import ClassManagement from './pages/ClassManagement';
 import ForgotPassword from './pages/ForgotPassword';
 import ResetPassword from './pages/ResetPassword';
 import Certificate from './pages/Certificate';
+import StudentReport from './pages/StudentReport';
 import Layout from './components/Layout';
 
 const Dashboard = () => {
@@ -136,6 +137,15 @@ function App() {
             element={
               <ProtectedRoute allowedRoles={['supervisor', 'admin', 'manager']}>
                 <Certificate />
+              </ProtectedRoute>
+            } 
+          />
+
+          <Route 
+            path="/report/:id" 
+            element={
+              <ProtectedRoute allowedRoles={['supervisor', 'admin', 'manager']}>
+                <StudentReport />
               </ProtectedRoute>
             } 
           />
