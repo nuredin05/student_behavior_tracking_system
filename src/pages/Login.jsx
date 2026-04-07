@@ -34,12 +34,13 @@ const Login = () => {
       <div className="absolute bottom-0 left-0 w-[400px] h-[400px] bg-primaryClrDark/30 rounded-full blur-[100px] -ml-32 -mb-32"></div>
 
       <div className="w-full max-w-md animate-fadeInUp">
+        <h1 className="text-3xl font-display font-bold text-primaryClrText mb-2 text-center">Amana Model Secondary School</h1>
         <div className="glass-card">
           <div className="text-center mb-10">
             <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-primaryClr/20 text-primaryClr mb-6">
-              <LogIn size={32} />
+              <img src="/icon.png" alt="logo" className='w-full h-full object-cover rounded-xl' />
             </div>
-            <h1 className="text-3xl font-display font-bold text-primaryClrText mb-2">School Tracker</h1>
+            <h1 className="text-3xl font-display font-bold text-primaryClrText mb-2">Welcome Back</h1>
             <p className="text-secondaryClr text-sm">Please enter your credentials to continue</p>
           </div>
 
@@ -97,7 +98,7 @@ const Login = () => {
 
           <div className="mt-8 pt-8 border-t border-white/5 text-center">
             <p className="text-secondaryClr text-xs">
-              System Admin contact / technical support: support@sbts.com
+              System Admin contact / technical support: 09111111111111
             </p>
           </div>
         </div>

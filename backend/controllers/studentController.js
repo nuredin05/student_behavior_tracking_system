@@ -92,7 +92,7 @@ const getStudentFullProfile = async (req, res) => {
 
 // Create a new student (Officer task)
 const createStudent = async (req, res) => {
-  const { admission_number, first_name, last_name, date_of_birth, gender, class_id, photo_url } = req.body;
+  const { admission_number, first_name, last_name, date_of_birth, gender, class_id, photo_url, parent_phone } = req.body;
   const officerId = req.user.id; // From authMiddleware
 
   if (!admission_number || !first_name || !last_name || !photo_url) {
@@ -107,9 +107,9 @@ const createStudent = async (req, res) => {
 
     const studentId = uuidv4();
     await db.query(`
-      INSERT INTO students (id, admission_number, first_name, last_name, date_of_birth, gender, class_id, photo_url, registered_by)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-    `, [studentId, admission_number, first_name, last_name, date_of_birth || null, gender || null, class_id || null, photo_url, officerId]);
+      INSERT INTO students (id, admission_number, first_name, last_name, date_of_birth, gender, class_id, photo_url, parent_phone, registered_by)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `, [studentId, admission_number, first_name, last_name, date_of_birth || null, gender || null, class_id || null, photo_url, parent_phone || null, officerId]);
 
     res.status(201).json({ 
       message: 'Student created successfully',
@@ -182,7 +182,7 @@ const bulkImportStudents = (req, res) => {
     .on('end', async () => {
       try {
         for (const row of results) {
-          const { admission_number, first_name, last_name, gender, date_of_birth, class_id } = row;
+          const { admission_number, first_name, last_name, gender, date_of_birth, class_id, parent_phone } = row;
 
           if (!admission_number || !first_name || !last_name) {
             skipCount++;
@@ -197,8 +197,8 @@ const bulkImportStudents = (req, res) => {
 
           const studentId = uuidv4();
           await db.query(`
-            INSERT INTO students (id, admission_number, first_name, last_name, gender, date_of_birth, class_id, registered_by)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+            INSERT INTO students (id, admission_number, first_name, last_name, gender, date_of_birth, class_id, parent_phone, registered_by)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
           `, [
             studentId, 
             admission_number, 
@@ -207,6 +207,7 @@ const bulkImportStudents = (req, res) => {
             gender || null, 
             date_of_birth || null, 
             class_id || null, 
+            parent_phone || null,
             officerId
           ]);
           successCount++;

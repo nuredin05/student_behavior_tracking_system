@@ -120,6 +120,10 @@ const StudentDetail = () => {
                   Active
                 </span>
               </div>
+              <div>
+                <p className="text-[10px] text-secondaryClr uppercase tracking-widest font-bold mb-1">Guardian Contact</p>
+                <p className="text-lg font-bold">{student.parent_phone || 'None'}</p>
+              </div>
             </div>
           </div>
         </div>

@@ -14,7 +14,8 @@ import {
   Loader2,
   X,
   CheckCircle,
-  AlertCircle
+  AlertCircle,
+  Edit2
 } from 'lucide-react';
 
 const UserManagement = () => {
@@ -22,6 +23,8 @@ const UserManagement = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [editingUser, setEditingUser] = useState(null);
   const [status, setStatus] = useState({ type: '', message: '' });
   const [newUser, setNewUser] = useState({
     first_name: '',
@@ -68,6 +71,36 @@ const UserManagement = () => {
     }
   };
 
+  const openEditModal = (user) => {
+    setEditingUser({ ...user });
+    setIsEditModalOpen(true);
+    setStatus({ type: '', message: '' });
+  };
+
+  const handleEditUser = async (e) => {
+    e.preventDefault();
+    setIsLoading(true);
+    setStatus({ type: '', message: '' });
+
+    try {
+      await api.patch(`/auth/users/${editingUser.id}`, {
+        first_name: editingUser.first_name,
+        last_name: editingUser.last_name,
+        role: editingUser.role,
+        email: editingUser.email
+      });
+      setStatus({ type: 'success', message: 'User updated successfully!' });
+      setTimeout(() => {
+        setIsEditModalOpen(false);
+        setStatus({ type: '', message: '' });
+      }, 1500);
+      fetchUsers();
+    } catch (error) {
+      setStatus({ type: 'error', message: error.response?.data?.error || 'Update failed' });
+    } finally {
+      setIsLoading(false);
+    }
+  };
   const toggleUserStatus = async (userId, currentStatus) => {
     try {
       await api.patch(`/auth/users/${userId}`, { is_active: !currentStatus });
@@ -178,8 +211,12 @@ const UserManagement = () => {
                       >
                         {u.is_active ? <UserX size={18} /> : <UserCheck size={18} />}
                       </button>
-                      <button className="p-2 rounded-lg hover:bg-white/5 text-secondaryClr transition-all">
-                        <MoreVertical size={18} />
+                      <button 
+                        onClick={() => openEditModal(u)}
+                        className="p-2 rounded-lg hover:bg-white/5 text-secondaryClr transition-all"
+                        title="Edit User"
+                      >
+                        <Edit2 size={18} />
                       </button>
                     </div>
                   </td>
@@ -287,6 +324,88 @@ const UserManagement = () => {
                 className="btn-primary w-full py-4 flex items-center justify-center gap-3"
               >
                 {isLoading ? <Loader2 size={24} className="animate-spin" /> : 'Complete Registration'}
+              </button>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Edit User Modal */}
+      {isEditModalOpen && editingUser && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-bgDarkAll/80 backdrop-blur-sm" onClick={() => setIsEditModalOpen(false)}></div>
+          <div className="glass-card !p-0 w-full max-w-xl relative z-60 animate-scaleIn">
+            <div className="p-6 border-b border-white/5 flex items-center justify-between">
+              <h3 className="text-xl font-bold">Edit Staff Profile</h3>
+              <button 
+                onClick={() => setIsEditModalOpen(false)}
+                className="p-2 rounded-xl hover:bg-white/5 text-secondaryClr transition-colors"
+              >
+                <X size={20} />
+              </button>
+            </div>
+            
+            <form onSubmit={handleEditUser} className="p-8 space-y-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-secondaryClr">First Name</label>
+                  <input 
+                    type="text" 
+                    required 
+                    className="input-field" 
+                    value={editingUser.first_name}
+                    onChange={(e) => setEditingUser({...editingUser, first_name: e.target.value})}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-secondaryClr">Last Name</label>
+                  <input 
+                    type="text" 
+                    required 
+                    className="input-field" 
+                    value={editingUser.last_name}
+                    onChange={(e) => setEditingUser({...editingUser, last_name: e.target.value})}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-secondaryClr">Email</label>
+                  <input 
+                    type="email" 
+                    className="input-field" 
+                    value={editingUser.email || ''}
+                    onChange={(e) => setEditingUser({...editingUser, email: e.target.value})}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-secondaryClr">Assign Role</label>
+                  <select 
+                    className="input-field"
+                    value={editingUser.role}
+                    onChange={(e) => setEditingUser({...editingUser, role: e.target.value})}
+                  >
+                    <option value="teacher">Teacher</option>
+                    <option value="supervisor">Supervisor</option>
+                    <option value="officer">Officer</option>
+                    <option value="manager">Manager</option>
+                  </select>
+                </div>
+              </div>
+
+              {status.message && (
+                <div className={`p-4 rounded-xl flex items-center gap-3 text-sm ${
+                  status.type === 'success' ? 'bg-accentClr/10 text-accentClr border border-accentClr/20' : 'bg-dangerClr/10 text-dangerClr border border-dangerClr/20'
+                }`}>
+                  {status.type === 'success' ? <CheckCircle size={20} /> : <AlertCircle size={20} />}
+                  <span>{status.message}</span>
+                </div>
+              )}
+
+              <button 
+                type="submit" 
+                disabled={isLoading}
+                className="btn-primary w-full py-4 flex items-center justify-center gap-3"
+              >
+                {isLoading ? <Loader2 size={24} className="animate-spin" /> : 'Save Changes'}
               </button>
             </form>
           </div>

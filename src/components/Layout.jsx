@@ -2,13 +2,13 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import api from '../api/axios';
-import { 
-  Users, 
-  UserPlus, 
-  ClipboardList, 
-  BarChart3, 
-  LogOut, 
-  Bell, 
+import {
+  Users,
+  UserPlus,
+  ClipboardList,
+  BarChart3,
+  LogOut,
+  Bell,
   Settings,
   LayoutDashboard,
   ShieldCheck,
@@ -76,32 +76,35 @@ const Layout = ({ children }) => {
 
   return (
     <div className="flex h-screen w-full bg-bgDarkAll text-primaryClrText overflow-hidden" onClick={() => setShowNotifications(false)}>
-      
+
       {/* Mobile Menu Backdrop */}
       {isMobileMenuOpen && (
-        <div 
+        <div
           className="fixed inset-0 bg-black/60 backdrop-blur-sm z-40 lg:hidden transition-opacity"
           onClick={() => setIsMobileMenuOpen(false)}
         />
       )}
 
       {/* Sidebar */}
-      <aside 
-        className={`fixed inset-y-0 left-0 z-50 w-72 bg-bgDark border-r border-white/5 flex flex-col transform transition-transform duration-300 lg:static lg:translate-x-0 ${isMobileMenuOpen ? 'translate-x-0 shadow-2xl shadow-black/50' : '-translate-x-full'}`} 
+      <aside
+        className={`fixed inset-y-0 left-0 z-50 w-72 bg-bgDark border-r border-white/5 flex flex-col transform transition-transform duration-300 lg:static lg:translate-x-0 ${isMobileMenuOpen ? 'translate-x-0 shadow-2xl shadow-black/50' : '-translate-x-full'}`}
         onClick={e => e.stopPropagation()}
       >
         <div className="p-8 relative">
-          <button 
+          <button
             className="absolute top-8 right-6 lg:hidden text-secondaryClr hover:text-white"
             onClick={() => setIsMobileMenuOpen(false)}
           >
             <X size={24} />
           </button>
           <div className="flex items-center gap-3 px-2 mb-8 cursor-pointer" onClick={() => navigate('/dashboard')}>
-            <div className="w-10 h-10 rounded-xl bg-primaryClr flex items-center justify-center text-white font-bold text-xl">
-              S
+            <div className="w-10 h-10 flex items-center justify-center shrink-0">
+              <img src="/icon.png" alt="" className='w-full h-full object-cover rounded-xl' />
             </div>
-            <span className="text-xl font-display font-bold text-primaryClr">SBTS</span>
+            <div className="flex flex-col">
+              <span className="text-xl font-display font-bold text-primaryClr leading-tight">AMSS</span>
+              <span className="text-[10px] text-secondaryClr uppercase tracking-widest font-semibold mt-0.5">Shaping The Future</span>
+            </div>
           </div>
 
           <nav className="space-y-2">
@@ -138,7 +141,7 @@ const Layout = ({ children }) => {
         {/* Topbar */}
         <header className="h-20 bg-bgDark/40 backdrop-blur-md border-b border-white/5 flex items-center justify-between px-4 md:px-8 z-20">
           <div className="flex items-center gap-4">
-            <button 
+            <button
               className="lg:hidden p-2 text-secondaryClr hover:text-primaryClrText transition-colors"
               onClick={(e) => { e.stopPropagation(); setIsMobileMenuOpen(true); }}
             >
@@ -151,7 +154,7 @@ const Layout = ({ children }) => {
 
           <div className="flex items-center gap-6" onClick={e => e.stopPropagation()}>
             <div className="relative">
-              <button 
+              <button
                 onClick={() => setShowNotifications(!showNotifications)}
                 className={`p-3 rounded-xl transition-all duration-300 relative ${showNotifications ? 'bg-primaryClr/20 text-primaryClr' : 'text-secondaryClr hover:text-primaryClr hover:bg-white/5'}`}
               >
@@ -177,8 +180,8 @@ const Layout = ({ children }) => {
                       </div>
                     ) : (
                       notifications.map(notif => (
-                        <div 
-                          key={notif.id} 
+                        <div
+                          key={notif.id}
                           onClick={() => handleMarkRead(notif.id)}
                           className={`p-4 border-b border-white/5 hover:bg-white/5 transition-colors cursor-pointer group flex items-start gap-4 ${!notif.is_read ? 'bg-primaryClr/5' : ''}`}
                         >
@@ -195,7 +198,7 @@ const Layout = ({ children }) => {
                     )}
                   </div>
                   {notifications.length > 0 && (
-                    <button 
+                    <button
                       onClick={async () => {
                         await api.put('/notifications/read-all');
                         fetchNotifications();

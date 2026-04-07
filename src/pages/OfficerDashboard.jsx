@@ -10,6 +10,7 @@ const OfficerDashboard = () => {
     date_of_birth: '',
     gender: 'male',
     class_id: '',
+    parent_phone: '',
   });
   const [photo, setPhoto] = useState(null);
   const [preview, setPreview] = useState(null);
@@ -25,16 +26,19 @@ const OfficerDashboard = () => {
   const [bulkStatus, setBulkStatus] = useState({ type: '', message: '' });
 
   useEffect(() => {
-    // Fetch classes for dropdown
-    const fetchClasses = async () => {
+    const fetchData = async () => {
       try {
-        const response = await api.get('/school/classes');
-        setClasses(response.data);
+        const [classRes, studentRes] = await Promise.all([
+          api.get('/school/classes'),
+          api.get('/students')
+        ]);
+        setClasses(classRes.data);
+        setStudents(studentRes.data);
       } catch (error) {
-        console.error('Error fetching classes:', error);
+        console.error('Error fetching dashboard data:', error);
       }
     };
-    fetchClasses();
+    fetchData();
   }, []);
 
   const handlePhotoChange = (e) => {
@@ -46,9 +50,9 @@ const OfficerDashboard = () => {
   };
 
   const downloadTemplate = () => {
-    const csvContent = "data:text/csv;charset=utf-8,admission_number,first_name,last_name,gender,date_of_birth\n" +
-      "STU-001,John,Doe,male,2010-05-15\n" + 
-      "STU-002,Jane,Smith,female,2011-08-20";
+    const csvContent = "data:text/csv;charset=utf-8,admission_number,first_name,last_name,gender,date_of_birth,parent_phone\n" +
+      "STU-001,John,Doe,male,2010-05-15,0911223344\n" + 
+      "STU-002,Jane,Smith,female,2011-08-20,0922334455";
     const encodedUri = encodeURI(csvContent);
     const link = document.createElement("a");
     link.setAttribute("href", encodedUri);
@@ -108,9 +112,13 @@ const OfficerDashboard = () => {
         headers: { 'Content-Type': 'multipart/form-data' }
       });
       setStatus({ type: 'success', message: 'Student registered successfully!' });
-      setFormData({ admission_number: '', first_name: '', last_name: '', date_of_birth: '', gender: 'male', class_id: '' });
+      setFormData({ admission_number: '', first_name: '', last_name: '', date_of_birth: '', gender: 'male', class_id: '', parent_phone: '' });
       setPhoto(null);
       setPreview(null);
+      
+      // Re-fetch students to update counter
+      const studentRes = await api.get('/students');
+      setStudents(studentRes.data);
     } catch (error) {
       setStatus({ type: 'error', message: error.response?.data?.error || 'Failed to register student' });
     } finally {
@@ -228,6 +236,16 @@ const OfficerDashboard = () => {
                     </button>
                   ))}
                 </div>
+              </div>
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-secondaryClr">Guardian Phone Number</label>
+                <input
+                  type="tel"
+                  placeholder="0911667788"
+                  className="input-field"
+                  value={formData.parent_phone}
+                  onChange={(e) => setFormData({...formData, parent_phone: e.target.value})}
+                />
               </div>
               <div className="space-y-2">
                 <label className="text-sm font-medium text-secondaryClr">Date of Birth</label>

@@ -38,6 +38,7 @@ CREATE TABLE IF NOT EXISTS students (
     gender ENUM('male', 'female', 'other'),
     class_id VARCHAR(36),
     photo_url VARCHAR(255) NOT NULL, -- Mandatory photo
+    parent_phone VARCHAR(20),     -- Primary guardian contact
     current_points INT DEFAULT 0,
     registered_by VARCHAR(36),
     status ENUM('active', 'withdrawn', 'graduated') DEFAULT 'active',
