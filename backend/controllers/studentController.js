@@ -1,17 +1,32 @@
 const db = require('../config/db');
 const { v4: uuidv4 } = require('uuid');
 const fs = require('fs');
-const csv = require('csv-parser');
+const xlsx = require('xlsx');
 
 const getAllStudents = async (req, res) => {
+  const { role, id: userId } = req.user;
   try {
-    const query = `
+    let query = `
       SELECT s.*, c.grade_level, c.section 
       FROM students s 
       LEFT JOIN classes c ON s.class_id = c.id
-      ORDER BY s.last_name, s.first_name
     `;
-    const [students] = await db.query(query);
+    let params = [];
+
+    // If teacher, only show students from their assigned classes or homeroom
+    if (role === 'teacher') {
+      query += `
+        WHERE s.class_id IN (
+          SELECT id FROM classes WHERE teacher_id = ?
+          UNION
+          SELECT class_id FROM teacher_assignments WHERE teacher_id = ?
+        )
+      `;
+      params.push(userId, userId);
+    }
+
+    query += ` ORDER BY s.last_name, s.first_name`;
+    const [students] = await db.query(query, params);
     res.json(students);
   } catch (error) {
     console.error('Error fetching students:', error);
@@ -41,7 +56,6 @@ const getStudentById = async (req, res) => {
 
 const getStudentFullProfile = async (req, res) => {
   const { id } = req.params;
-  console.log('Fetching full profile for student ID:', id);
   try {
     // 1. Get Student Info
     const [student] = await db.query(`
@@ -51,10 +65,7 @@ const getStudentFullProfile = async (req, res) => {
       WHERE s.id = ?
     `, [id]);
 
-    console.log('Student query result rows:', student.length);
-
     if (student.length === 0) {
-      console.warn('Student not found in DB for ID:', id);
       return res.status(404).json({ error: 'Student not found' });
     }
 
@@ -192,66 +203,160 @@ const deleteStudent = async (req, res) => {
   }
 };
 
-const bulkImportStudents = (req, res) => {
+const bulkImportStudents = async (req, res) => {
   if (!req.file) {
-    return res.status(400).json({ error: 'CSV file is required.' });
+    return res.status(400).json({ error: 'Excel file is required.' });
   }
 
   const officerId = req.user.id;
-  const results = [];
   let successCount = 0;
   let skipCount = 0;
 
-  fs.createReadStream(req.file.path)
-    .pipe(csv())
-    .on('data', (data) => results.push(data))
-    .on('end', async () => {
-      try {
-        for (const row of results) {
-          const { admission_number, first_name, last_name, gender, date_of_birth, class_id, parent_phone } = row;
+  try {
+    // Read the Excel file
+    const workbook = xlsx.readFile(req.file.path);
+    const sheetName = workbook.SheetNames[0];
+    const results = xlsx.utils.sheet_to_json(workbook.Sheets[sheetName]);
 
-          if (!admission_number || !first_name || !last_name) {
-            skipCount++;
-            continue;
-          }
-
-          const [existing] = await db.query('SELECT id FROM students WHERE admission_number = ?', [admission_number]);
-          if (existing.length > 0) {
-            skipCount++;
-            continue; // Skip duplicates
-          }
-
-          const studentId = uuidv4();
-          await db.query(`
-            INSERT INTO students (id, admission_number, first_name, last_name, gender, date_of_birth, class_id, parent_phone, registered_by)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-          `, [
-            studentId, 
-            admission_number, 
-            first_name, 
-            last_name, 
-            gender || null, 
-            date_of_birth || null, 
-            class_id || null, 
-            parent_phone || null,
-            officerId
-          ]);
-          successCount++;
-        }
-        
-        // Clean up temp file
-        fs.unlink(req.file.path, (err) => { if(err) console.error(err); });
-
-        res.status(200).json({ message: 'Import complete', successCount, skipCount });
-      } catch (error) {
-        console.error('Bulk import error:', error);
-        res.status(500).json({ error: 'Bulk import logic failed' });
-      }
-    })
-    .on('error', (err) => {
-      console.error('CSV parse error:', err);
-      res.status(500).json({ error: 'Failed to parse CSV' });
+    // Fetch all classes for mapping Grade/Section to class_id
+    const [classes] = await db.query('SELECT id, grade_level, section FROM classes');
+    const classMap = {};
+    classes.forEach(c => {
+      // Map both "Grade-Section" and "GradeSection" formats
+      const key = `${c.grade_level}${c.section}`.toLowerCase().replace(/\s/g, '');
+      classMap[key] = c.id;
     });
+
+    for (const row of results) {
+      // Handle both exact column names and lowercase variants
+      const admission_number = row.admission_number || row.Admission_Number || row['Admission Number'];
+      const first_name = row.first_name || row.First_Name || row['First Name'];
+      const last_name = row.last_name || row.Last_Name || row['Last Name'];
+      const gender = (row.gender || row.Gender || 'male').toLowerCase();
+      const date_of_birth = row.date_of_birth || row.Date_Of_Birth || row['Date of Birth'];
+      const parent_phone = row.parent_phone || row.Parent_Phone || row['Parent Phone'];
+      const grade = row.grade || row.Grade;
+      const section = row.section || row.Section;
+
+      if (!admission_number || !first_name || !last_name) {
+        skipCount++;
+        continue;
+      }
+
+      // Resolve class_id
+      let resolvedClassId = null;
+      if (grade && section) {
+        const classKey = `${grade}${section}`.toLowerCase().replace(/\s/g, '');
+        resolvedClassId = classMap[classKey] || null;
+      }
+
+      // Check for existing admission number
+      const [existing] = await db.query('SELECT id FROM students WHERE admission_number = ?', [admission_number]);
+      if (existing.length > 0) {
+        skipCount++;
+        continue;
+      }
+
+      const studentId = uuidv4();
+      await db.query(`
+        INSERT INTO students (id, admission_number, first_name, last_name, gender, date_of_birth, class_id, parent_phone, registered_by, photo_url)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      `, [
+        studentId, 
+        admission_number, 
+        first_name, 
+        last_name, 
+        ['male', 'female', 'other'].includes(gender) ? gender : 'male', 
+        date_of_birth || null, 
+        resolvedClassId, 
+        parent_phone || null,
+        officerId,
+        null // No default photo for bulk import
+      ]);
+      successCount++;
+    }
+    
+    // Clean up temp file
+    fs.unlink(req.file.path, (err) => { if(err) console.error(err); });
+
+    res.status(200).json({ message: 'Import complete', successCount, skipCount });
+  } catch (error) {
+    console.error('Bulk import error:', error);
+    // Try to clean up file even if error occurs
+    if (req.file.path) fs.unlink(req.file.path, () => {});
+    res.status(500).json({ error: 'Bulk import logic failed: ' + error.message });
+  }
+};
+
+const getNextAdmissionNumber = async (req, res) => {
+  try {
+    const year = new Date().getFullYear();
+    const prefix = `AMSS/${year}/`;
+    
+    // Find the highest sequence number for this year
+    const [rows] = await db.query(`
+      SELECT admission_number 
+      FROM students 
+      WHERE admission_number LIKE ? 
+      ORDER BY admission_number DESC 
+      LIMIT 1
+    `, [`${prefix}%`]);
+
+    let nextNumber = 1;
+    if (rows.length > 0) {
+      const lastNumberStr = rows[0].admission_number.split('/').pop();
+      const lastNumber = parseInt(lastNumberStr, 10);
+      if (!isNaN(lastNumber)) {
+        nextNumber = lastNumber + 1;
+      }
+    }
+
+    const nextId = `${prefix}${nextNumber.toString().padStart(3, '0')}`;
+    res.json({ nextId });
+  } catch (error) {
+    console.error('Error generating next admission number:', error);
+    res.status(500).json({ error: 'Internal Server Error' });
+  }
+};
+
+const downloadStudentTemplate = async (req, res) => {
+  try {
+    const data = [
+      {
+        admission_number: "STU-001",
+        first_name: "John",
+        last_name: "Doe",
+        gender: "male",
+        date_of_birth: "2010-05-15",
+        parent_phone: "0911223344",
+        grade: "9",
+        section: "A"
+      },
+      {
+        admission_number: "STU-002",
+        first_name: "Jane",
+        last_name: "Smith",
+        gender: "female",
+        date_of_birth: "2011-08-20",
+        parent_phone: "0922334455",
+        grade: "10",
+        section: "B"
+      }
+    ];
+
+    const worksheet = xlsx.utils.json_to_sheet(data);
+    const workbook = xlsx.utils.book_new();
+    xlsx.utils.book_append_sheet(workbook, worksheet, "Students");
+
+    const buffer = xlsx.write(workbook, { type: 'buffer', bookType: 'xlsx' });
+
+    res.setHeader('Content-Disposition', 'attachment; filename=student_enrollment_template.xlsx');
+    res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+    res.send(buffer);
+  } catch (error) {
+    console.error('Error downloading template:', error);
+    res.status(500).json({ error: 'Failed to generate template' });
+  }
 };
 
 module.exports = {
@@ -261,5 +366,7 @@ module.exports = {
   createStudent,
   updateStudent,
   deleteStudent,
-  bulkImportStudents
+  bulkImportStudents,
+  getNextAdmissionNumber,
+  downloadStudentTemplate
 };

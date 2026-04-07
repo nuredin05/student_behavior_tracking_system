@@ -34,6 +34,9 @@ const ClassManagement = () => {
 
   const [isEdit, setIsEdit] = useState(false);
   const [editId, setEditId] = useState(null);
+  const [assignments, setAssignments] = useState([]);
+  const [newAssignment, setNewAssignment] = useState({ teacher_id: '', subject_name: '' });
+  const [isAddingAssignment, setIsAddingAssignment] = useState(false);
 
   useEffect(() => {
     fetchData();
@@ -47,7 +50,7 @@ const ClassManagement = () => {
       ]);
       setClasses(classRes.data);
       // Only supervisors and admins can be assigned to classes
-      setStaff(staffRes.data.filter(u => ['supervisor', 'admin', 'manager'].includes(u.role)));
+      setStaff(staffRes.data);
     } catch (error) {
       console.error('Error fetching data:', error);
     } finally {
@@ -78,6 +81,45 @@ const ClassManagement = () => {
     }
     setIsModalOpen(true);
     setStatus({ type: '', message: '' });
+    if (cls) {
+      fetchAssignments(cls.id);
+    } else {
+      setAssignments([]);
+    }
+  };
+
+  const fetchAssignments = async (classId) => {
+    try {
+      const res = await api.get(`/assignments/class/${classId}`);
+      setAssignments(res.data);
+    } catch (err) {
+      console.error('Error fetching assignments:', err);
+    }
+  };
+
+  const handleAddAssignment = async () => {
+    if (!newAssignment.teacher_id || !newAssignment.subject_name) return;
+    try {
+      await api.post('/assignments', {
+        class_id: editId,
+        teacher_id: newAssignment.teacher_id,
+        subject_name: newAssignment.subject_name
+      });
+      setNewAssignment({ teacher_id: '', subject_name: '' });
+      setIsAddingAssignment(false);
+      fetchAssignments(editId);
+    } catch (err) {
+      alert(err.response?.data?.error || 'Failed to add assignment');
+    }
+  };
+
+  const handleRemoveAssignment = async (id) => {
+    try {
+      await api.delete(`/assignments/${id}`);
+      fetchAssignments(editId);
+    } catch (err) {
+      alert('Failed to remove assignment');
+    }
   };
 
   const handleSubmit = async (e) => {
@@ -321,7 +363,7 @@ const ClassManagement = () => {
               </div>
 
               <div className="space-y-2">
-                <label className="text-sm font-medium text-secondaryClr">Assign Class Teacher</label>
+                <label className="text-sm font-medium text-secondaryClr">Assign Class Teacher (Homeroom)</label>
                 <select 
                   className="input-field"
                   value={formData.teacher_id}
@@ -335,6 +377,72 @@ const ClassManagement = () => {
                   ))}
                 </select>
               </div>
+
+              {isEdit && (
+                <div className="pt-6 border-t border-white/5 space-y-4">
+                  <div className="flex items-center justify-between">
+                    <h4 className="text-sm font-bold uppercase tracking-widest text-primaryClr">Subject Teachers</h4>
+                    {!isAddingAssignment && (
+                      <button 
+                        type="button"
+                        onClick={() => setIsAddingAssignment(true)}
+                        className="text-[10px] font-black uppercase text-accentClr hover:underline"
+                      >
+                        + Add Subject
+                      </button>
+                    )}
+                  </div>
+
+                  {isAddingAssignment && (
+                    <div className="p-4 bg-white/5 rounded-xl space-y-3 animate-fadeIn">
+                      <div className="grid grid-cols-2 gap-3">
+                        <select 
+                          className="input-field text-xs"
+                          value={newAssignment.teacher_id}
+                          onChange={(e) => setNewAssignment({...newAssignment, teacher_id: e.target.value})}
+                        >
+                          <option value="">Select Teacher</option>
+                          {staff.filter(s => s.role === 'teacher').map(s => (
+                            <option key={s.id} value={s.id}>{s.first_name} {s.last_name}</option>
+                          ))}
+                        </select>
+                        <input 
+                          type="text" 
+                          placeholder="Subject (e.g. Math)"
+                          className="input-field text-xs"
+                          value={newAssignment.subject_name}
+                          onChange={(e) => setNewAssignment({...newAssignment, subject_name: e.target.value})}
+                        />
+                      </div>
+                      <div className="flex justify-end gap-2 text-[10px]">
+                        <button type="button" onClick={() => setIsAddingAssignment(false)} className="px-3 py-1 text-secondaryClr">Cancel</button>
+                        <button type="button" onClick={handleAddAssignment} className="px-3 py-1 bg-accentClr text-white rounded font-bold">Save Assignment</button>
+                      </div>
+                    </div>
+                  )}
+
+                  <div className="space-y-2">
+                    {assignments.map(a => (
+                      <div key={a.id} className="flex items-center justify-between p-3 bg-bgDark rounded-lg border border-white/5">
+                        <div className="flex flex-col">
+                          <span className="text-xs font-bold">{a.first_name} {a.last_name}</span>
+                          <span className="text-[10px] text-secondaryClr uppercase tracking-widest">{a.subject_name}</span>
+                        </div>
+                        <button 
+                          type="button" 
+                          onClick={() => handleRemoveAssignment(a.id)}
+                          className="p-1.5 text-secondaryClr hover:text-dangerClr transition-colors"
+                        >
+                          <Trash2 size={14} />
+                        </button>
+                      </div>
+                    ))}
+                    {assignments.length === 0 && !isAddingAssignment && (
+                      <p className="text-[10px] text-secondaryClr italic text-center py-2 opacity-50">No subject teachers assigned yet.</p>
+                    )}
+                  </div>
+                </div>
+              )}
 
               {status.message && (
                 <div className={`p-4 rounded-xl flex items-center gap-3 text-sm ${

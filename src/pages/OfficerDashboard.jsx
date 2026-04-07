@@ -21,19 +21,21 @@ const OfficerDashboard = () => {
 
   // Bulk Import State
   const [activeTab, setActiveTab] = useState('single');
-  const [csvFile, setCsvFile] = useState(null);
+  const [excelFile, setExcelFile] = useState(null);
   const [isUploading, setIsUploading] = useState(false);
   const [bulkStatus, setBulkStatus] = useState({ type: '', message: '' });
 
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const [classRes, studentRes] = await Promise.all([
+        const [classRes, studentRes, nextIdRes] = await Promise.all([
           api.get('/school/classes'),
-          api.get('/students')
+          api.get('/students'),
+          api.get('/students/next-admission-id')
         ]);
         setClasses(classRes.data);
         setStudents(studentRes.data);
+        setFormData(prev => ({ ...prev, admission_number: nextIdRes.data.nextId }));
       } catch (error) {
         console.error('Error fetching dashboard data:', error);
       }
@@ -50,29 +52,20 @@ const OfficerDashboard = () => {
   };
 
   const downloadTemplate = () => {
-    const csvContent = "data:text/csv;charset=utf-8,admission_number,first_name,last_name,gender,date_of_birth,parent_phone\n" +
-      "STU-001,John,Doe,male,2010-05-15,0911223344\n" + 
-      "STU-002,Jane,Smith,female,2011-08-20,0922334455";
-    const encodedUri = encodeURI(csvContent);
-    const link = document.createElement("a");
-    link.setAttribute("href", encodedUri);
-    link.setAttribute("download", "student_import_template.csv");
-    document.body.appendChild(link);
-    link.click();
-    link.remove();
+    window.open('/api/students/download/student_enrollment_template.xlsx', '_blank');
   };
 
   const handleBulkSubmit = async (e) => {
     e.preventDefault();
-    if (!csvFile) {
-      setBulkStatus({ type: 'error', message: 'Please select a CSV file.' });
+    if (!excelFile) {
+      setBulkStatus({ type: 'error', message: 'Please select an Excel file.' });
       return;
     }
     setIsUploading(true);
     setBulkStatus({ type: '', message: '' });
 
     const data = new FormData();
-    data.append('csv_file', csvFile);
+    data.append('excel_file', excelFile);
 
     try {
       const response = await api.post('/students/bulk', data, {
@@ -82,7 +75,7 @@ const OfficerDashboard = () => {
         type: 'success', 
         message: `Import complete! Added ${response.data.successCount} students. Skipped ${response.data.skipCount} invalid or duplicate rows.` 
       });
-      setCsvFile(null);
+      setExcelFile(null);
       
       const studentRes = await api.get('/students');
       setStudents(studentRes.data);
@@ -116,9 +109,13 @@ const OfficerDashboard = () => {
       setPhoto(null);
       setPreview(null);
       
-      // Re-fetch students to update counter
-      const studentRes = await api.get('/students');
+      // Re-fetch students and next ID to update counter and form
+      const [studentRes, nextIdRes] = await Promise.all([
+        api.get('/students'),
+        api.get('/students/next-admission-id')
+      ]);
       setStudents(studentRes.data);
+      setFormData(prev => ({ ...prev, admission_number: nextIdRes.data.nextId }));
     } catch (error) {
       setStatus({ type: 'error', message: error.response?.data?.error || 'Failed to register student' });
     } finally {
@@ -158,7 +155,7 @@ const OfficerDashboard = () => {
           className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-medium transition-all ${activeTab === 'bulk' ? 'bg-primaryClr text-white shadow-lg' : 'text-secondaryClr hover:text-white'}`}
         >
           <FileSpreadsheet size={16} />
-          Bulk CSV Import
+          Bulk Excel Import
         </button>
       </div>
 
@@ -288,7 +285,7 @@ const OfficerDashboard = () => {
               <div className="flex items-center justify-between mb-8">
                 <div>
                   <h3 className="text-xl font-bold text-primaryClrText mb-1">Bulk Import Students</h3>
-                  <p className="text-sm text-secondaryClr">Upload an Excel CSV file to register multiple students at once.</p>
+                  <p className="text-sm text-secondaryClr">Upload an Excel (.xlsx) file to register multiple students at once.</p>
                 </div>
                 <button 
                   onClick={downloadTemplate}
@@ -303,16 +300,16 @@ const OfficerDashboard = () => {
                 <div className="relative group w-full h-48 rounded-2xl bg-bgDarkAll/50 border-2 border-dashed border-white/10 flex flex-col items-center justify-center overflow-hidden transition-all duration-300 hover:border-primaryClr/50">
                   <UploadCloud size={48} className="text-secondaryClr mb-4 group-hover:text-primaryClr transition-colors duration-300" />
                   <p className="text-sm font-bold text-primaryClrText mb-1">
-                    {csvFile ? csvFile.name : 'Click to browse or drag CSV here'}
+                    {excelFile ? excelFile.name : 'Click to browse or drag Excel here'}
                   </p>
                   <p className="text-xs text-secondaryClr">
-                    {csvFile ? `${(csvFile.size / 1024).toFixed(1)} KB` : 'Maximum file size 10MB'}
+                    {excelFile ? `${(excelFile.size / 1024).toFixed(1)} KB` : 'Maximum file size 10MB'}
                   </p>
                   <input 
                     type="file" 
-                    accept=".csv" 
+                    accept=".xlsx, .xls" 
                     className="absolute inset-0 opacity-0 cursor-pointer" 
-                    onChange={(e) => setCsvFile(e.target.files[0])} 
+                    onChange={(e) => setExcelFile(e.target.files[0])} 
                   />
                 </div>
 
@@ -327,7 +324,7 @@ const OfficerDashboard = () => {
 
                 <button
                   type="submit"
-                  disabled={isUploading || !csvFile}
+                  disabled={isUploading || !excelFile}
                   className="btn-primary w-full py-4 flex items-center justify-center gap-3 text-lg disabled:opacity-50"
                 >
                   {isUploading ? (

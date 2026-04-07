@@ -29,6 +29,7 @@ const TeacherDashboard = () => {
   const [preview, setPreview] = useState(null);
   
   const [myHistory, setMyHistory] = useState([]);
+  const [myAssignments, setMyAssignments] = useState([]);
   const [todayCount, setTodayCount] = useState(0);
   
   const [isLoading, setIsLoading] = useState(false);
@@ -38,15 +39,17 @@ const TeacherDashboard = () => {
     // Initial data fetch
     const fetchData = async () => {
       try {
-        const [studentRes, catRes, historyRes] = await Promise.all([
+        const [studentRes, catRes, historyRes, assignRes] = await Promise.all([
           api.get('/students'),
           api.get('/behaviors/categories'),
-          api.get('/behaviors/records/history')
+          api.get('/behaviors/records/history'),
+          api.get('/assignments/my-assignments')
         ]);
         setStudents(studentRes.data);
         setCategories(catRes.data);
         setMyHistory(historyRes.data.history);
         setTodayCount(historyRes.data.todayCount);
+        setMyAssignments(assignRes.data);
       } catch (error) {
         console.error('Error fetching dashboard data:', error);
       }
@@ -133,6 +136,19 @@ const TeacherDashboard = () => {
         </div>
       </div>
 
+      {/* Assignment Context */}
+      {myAssignments.length > 0 && (
+        <div className="flex flex-wrap gap-3">
+          {myAssignments.map(as => (
+            <div key={as.id} className="px-4 py-2 bg-white/5 border border-white/10 rounded-full flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-secondaryClr">
+              <span className="text-primaryClr">Grade {as.grade_level}-{as.section}</span>
+              <span className="w-1 h-1 rounded-full bg-white/20"></span>
+              {as.subject_name}
+            </div>
+          ))}
+        </div>
+      )}
+
       <div className="grid grid-cols-1 xl:grid-cols-3 gap-8">
         {/* Main Selection & Form */}
         <div className="xl:col-span-2 space-y-8">
@@ -187,7 +203,7 @@ const TeacherDashboard = () => {
               <div className="mt-6 p-4 bg-primaryClr/10 border border-primaryClr/20 rounded-xl flex items-center justify-between">
                 <div className="flex items-center gap-4">
                   <img 
-                    src={selectedStudent.photo_url || 'https://placehold.co/100x100?text=Profile'} 
+                    src={selectedStudent.photo_url || `https://ui-avatars.com/api/?name=${selectedStudent.first_name}+${selectedStudent.last_name}&background=6c5dd3&color=fff`} 
                     alt="profile" 
                     className="w-12 h-12 rounded-full object-cover border-2 border-primaryClr"
                   />

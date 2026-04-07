@@ -19,16 +19,25 @@ const upload = multer({
   storage,
   limits: { fileSize: 10 * 1024 * 1024 }, // 10MB limit
   fileFilter: (req, file, cb) => {
-    const filetypes = /jpeg|jpg|png|csv/;
+    const filetypes = /jpeg|jpg|png|csv|xlsx|xls/;
     const extname = filetypes.test(path.extname(file.originalname).toLowerCase());
     
     if (extname) return cb(null, true);
-    cb(new Error('Invalid file type! Allowed: jpeg, jpg, png, csv'));
+    cb(new Error('Invalid file type! Allowed: jpeg, jpg, png, csv, xlsx, xls'));
   }
 });
 
 // GET all students
 router.get('/', authenticate, studentController.getAllStudents);
+
+// GET next available Admission ID
+router.get('/next-admission-id', authenticate, studentController.getNextAdmissionNumber);
+
+// GET student enrollment Excel template (public - sample data only)
+router.get('/download-template', studentController.downloadStudentTemplate);
+
+// GET template with filename in URL (public - sample data only)
+router.get('/download/:filename', studentController.downloadStudentTemplate);
 
 // GET full profile
 router.get('/:id/full-profile', authenticate, studentController.getStudentFullProfile);
@@ -36,8 +45,8 @@ router.get('/:id/full-profile', authenticate, studentController.getStudentFullPr
 // GET single student by ID
 router.get('/:id', authenticate, studentController.getStudentById);
 
-// POST bulk import student CSV (Officer, Supervisor, Admin)
-router.post('/bulk', authenticate, authorize('officer', 'supervisor', 'admin'), upload.single('csv_file'), studentController.bulkImportStudents);
+// POST bulk import student Excel (Officer, Supervisor, Admin)
+router.post('/bulk', authenticate, authorize('officer', 'supervisor', 'admin'), upload.single('excel_file'), studentController.bulkImportStudents);
 
 // POST create student (Officer, Supervisor, Admin)
 router.post('/', authenticate, authorize('officer', 'supervisor', 'admin'), upload.single('photo'), (req, res, next) => {
