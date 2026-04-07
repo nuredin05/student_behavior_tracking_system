@@ -79,8 +79,8 @@ const StudentReport = () => {
         {/* School Header */}
         <div className="flex justify-between items-start border-b-2 border-slate-900 pb-6 mb-8 text-slate-800">
           <div className="flex gap-4 items-center">
-            <div className="w-16 h-16 bg-slate-900 text-white rounded flex items-center justify-center">
-              <ShieldCheck size={32} />
+            <div className="w-16 h-16 bg-white border border-slate-200 rounded flex items-center justify-center p-1">
+              <img src="/logo.png" alt="Logo" className="w-full h-full object-contain" />
             </div>
             <div>
               <h1 className="text-2xl font-black uppercase tracking-tight">Amana Model Secondary School</h1>

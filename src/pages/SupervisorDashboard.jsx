@@ -752,6 +752,7 @@ const ActionPlans = () => {
               <th className="p-6 text-xs font-bold uppercase tracking-widest text-secondaryClr">Incident</th>
               <th className="p-6 text-xs font-bold uppercase tracking-widest text-secondaryClr">Action Taken</th>
               <th className="p-6 text-xs font-bold uppercase tracking-widest text-secondaryClr">Status</th>
+              <th className="p-6 text-xs font-bold uppercase tracking-widest text-secondaryClr">Actions</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-white/5">
@@ -763,9 +764,28 @@ const ActionPlans = () => {
                 </td>
                 <td className="p-6">{i.action_taken}</td>
                 <td className="p-6">
-                  <span className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase bg-accentClr/10 text-accentClr`}>
+                  <span className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase ${
+                    i.status === 'completed' ? 'bg-green-500/20 text-green-500' : 'bg-accentClr/10 text-accentClr'
+                  }`}>
                     {i.status}
                   </span>
+                </td>
+                <td className="p-6">
+                  {i.status === 'pending' && (
+                    <button 
+                      onClick={async () => {
+                        try {
+                          await api.put(`/interventions/${i.id}/status`, { status: 'completed' });
+                          fetchInterventions();
+                        } catch (err) {
+                          alert('Failed to update status');
+                        }
+                      }}
+                      className="text-[10px] font-black uppercase tracking-widest text-primaryClr hover:text-white transition-colors"
+                    >
+                      Mark Completed
+                    </button>
+                  )}
                 </td>
               </tr>
             ))}

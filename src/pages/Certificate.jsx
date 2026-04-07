@@ -75,8 +75,8 @@ const Certificate = () => {
         {/* Content Container */}
         <div className="relative z-10 h-full flex flex-col items-center text-center px-12 py-16">
           <div className="mb-4">
-             <div className="w-24 h-24 bg-primaryClr text-white rounded-full flex items-center justify-center mx-auto mb-6 shadow-xl border-4 border-white">
-                <Award size={48} />
+             <div className="w-24 h-24 bg-white rounded-full flex items-center justify-center mx-auto mb-6 shadow-xl border-4 border-primaryClr/20 p-2">
+                <img src="/logo.png" alt="School Logo" className="w-full h-full object-contain" />
              </div>
              <h3 className="text-sm uppercase tracking-[0.3em] font-black italic text-secondaryClr/60 mb-1">{schoolName}</h3>
              <h4 className="text-[10px] uppercase font-bold tracking-[0.2em] text-slate-400 mb-10">Bishoftu, Ethiopia</h4>

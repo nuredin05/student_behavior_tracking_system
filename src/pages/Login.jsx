@@ -42,7 +42,7 @@ const Login = () => {
             <div className="absolute inset-0 bg-primaryClr blur-2xl opacity-20 group-hover:opacity-40 transition-opacity rounded-full"></div>
             <div className="w-24 h-24 bg-white rounded-3xl mb-6 mx-auto flex items-center justify-center shadow-2xl relative z-10 border border-white/50 transform group-hover:rotate-3 transition-transform">
               <img
-                src="/icon.png"
+                src="/logo.png"
                 alt="Logo"
                 className="w-16 h-16 object-contain"
               />

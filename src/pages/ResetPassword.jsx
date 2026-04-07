@@ -65,6 +65,12 @@ const ResetPassword = () => {
             <ArrowLeft size={16} /> Back
           </Link>
 
+          <div className="flex justify-center mb-8">
+            <div className="w-20 h-20 bg-white rounded-2xl flex items-center justify-center shadow-xl border border-white/50 p-2">
+              <img src="/logo.png" alt="logo" className="w-full h-full object-contain" />
+            </div>
+          </div>
+
           <div className="mb-8">
             <h2 className="text-3xl font-display font-black text-primaryClr mb-2 tracking-tighter uppercase">
               {isVerified ? 'Set New Password' : 'Verify Identity'}

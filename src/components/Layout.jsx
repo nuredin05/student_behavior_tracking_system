@@ -101,7 +101,7 @@ const Layout = ({ children }) => {
           </button>
           <div className="flex items-center gap-3 px-2 mb-8 cursor-pointer" onClick={() => navigate('/dashboard')}>
             <div className="w-10 h-10 flex items-center justify-center shrink-0">
-              <img src="/icon.png" alt="" className='w-full h-full object-cover rounded-xl' />
+              <img src="/logo.png" alt="logo" className='w-full h-full object-contain' />
             </div>
             <div className="flex flex-col">
               <span className="text-xl font-display font-bold text-primaryClr leading-tight">AMSS</span>
