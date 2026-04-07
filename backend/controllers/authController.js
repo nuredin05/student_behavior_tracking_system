@@ -2,6 +2,8 @@ const db = require('../config/db');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const { v4: uuidv4 } = require('uuid');
+const { sendSMS } = require('../utilities/smsService');
+const { sendResetEmail } = require('../utilities/emailService');
 
 const register = async (req, res) => {
   const { phone, password, role, first_name, last_name, email, profile_picture } = req.body;
@@ -82,6 +84,141 @@ const updateUser = async (req, res) => {
   }
 };
 
+const updateProfile = async (req, res) => {
+  const { first_name, last_name, email } = req.body;
+  const userId = req.user.id; // From authenticate middleware
+
+  try {
+    const [result] = await db.query(`
+      UPDATE users 
+      SET first_name = COALESCE(?, first_name),
+          last_name = COALESCE(?, last_name),
+          email = COALESCE(?, email)
+      WHERE id = ?
+    `, [first_name, last_name, email, userId]);
+
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    const [updatedUser] = await db.query('SELECT id, phone, email, role, first_name, last_name, profile_picture FROM users WHERE id = ?', [userId]);
+    res.json({ message: 'Profile updated', user: updatedUser[0] });
+  } catch (error) {
+    console.error('Error updating profile:', error);
+    res.status(500).json({ error: 'Internal Server Error' });
+  }
+};
+
+const deleteMe = async (req, res) => {
+  const userId = req.user.id;
+  try {
+    // Soft delete by deactivating
+    await db.query('UPDATE users SET is_active = false WHERE id = ?', [userId]);
+    res.json({ message: 'Account deactivated successfully' });
+  } catch (error) {
+    console.error('Error deleting account:', error);
+    res.status(500).json({ error: 'Internal Server Error' });
+  }
+};
+
+const changePassword = async (req, res) => {
+  const { currentPassword, newPassword } = req.body;
+  const userId = req.user.id;
+
+  try {
+    const [users] = await db.query('SELECT password_hash FROM users WHERE id = ?', [userId]);
+    if (users.length === 0) return res.status(404).json({ error: 'User not found' });
+
+    const isValid = await bcrypt.compare(currentPassword, users[0].password_hash);
+    if (!isValid) return res.status(401).json({ error: 'Current password incorrect' });
+
+    const newHash = await bcrypt.hash(newPassword, 10);
+    await db.query('UPDATE users SET password_hash = ? WHERE id = ?', [newHash, userId]);
+
+    res.json({ message: 'Password updated successfully' });
+  } catch (error) {
+    console.error('Error changing password:', error);
+    res.status(500).json({ error: 'Internal Server Error' });
+  }
+};
+
+const forgotPassword = async (req, res) => {
+  const { phone } = req.body;
+  try {
+    const [users] = await db.query('SELECT id FROM users WHERE phone = ?', [phone]);
+    if (users.length === 0) {
+      return res.status(404).json({ error: 'No account found with this phone number' });
+    }
+
+    const resetToken = Math.floor(100000 + Math.random() * 900000).toString(); // 6 digits
+    const expiry = new Date(Date.now() + 3600000); // 1 hour
+
+    try {
+      await db.query(`
+        UPDATE users 
+        SET reset_token = ?, reset_token_expiry = ? 
+        WHERE phone = ?
+      `, [resetToken, expiry, phone]);
+    } catch (dbErr) {
+      // Self-healing: If columns don't exist, create them and retry
+      if (dbErr.code === 'ER_BAD_FIELD_ERROR' || dbErr.message.includes('Unknown column')) {
+        console.log('[SELF-HEAL] Adding reset columns to users table...');
+        await db.query(`ALTER TABLE users ADD COLUMN reset_token VARCHAR(255) NULL, ADD COLUMN reset_token_expiry DATETIME NULL`);
+        await db.query(`
+          UPDATE users 
+          SET reset_token = ?, reset_token_expiry = ? 
+          WHERE phone = ?
+        `, [resetToken, expiry, phone]);
+      } else {
+        throw dbErr;
+      }
+    }
+
+    // DISPATCH CODE VIA SMS AND EMAIL
+    await sendSMS(phone, `Your Amana Model School behavior tracking reset code is: ${resetToken}. Do not share this.`);
+    
+    // Fetch user email if exists
+    const [userData] = await db.query('SELECT email FROM users WHERE phone = ?', [phone]);
+    if (userData[0]?.email) {
+      await sendResetEmail(userData[0].email, resetToken);
+    }
+
+    res.json({ 
+      message: 'Reset code sent!', 
+      instructions: 'Please check your phone (SMS) or primary school email.' 
+    });
+  } catch (error) {
+    console.error('Forgot password error:', error);
+    res.status(500).json({ error: 'Internal Server Error. Please verify the database schema if this persists.' });
+  }
+};
+
+const resetPassword = async (req, res) => {
+  const { phone, code, newPassword } = req.body;
+  try {
+    const [users] = await db.query(`
+      SELECT id FROM users 
+      WHERE phone = ? AND reset_token = ? AND reset_token_expiry > NOW()
+    `, [phone, code]);
+
+    if (users.length === 0) {
+      return res.status(400).json({ error: 'Invalid or expired reset code' });
+    }
+
+    const passwordHash = await bcrypt.hash(newPassword, 10);
+    await db.query(`
+      UPDATE users 
+      SET password_hash = ?, reset_token = NULL, reset_token_expiry = NULL 
+      WHERE id = ?
+    `, [passwordHash, users[0].id]);
+
+    res.json({ message: 'Password reset successful. You can now log in.' });
+  } catch (error) {
+    console.error('Reset password error:', error);
+    res.status(500).json({ error: 'Internal Server Error' });
+  }
+};
+
 const login = async (req, res) => {
   const { phone, password } = req.body;
 
@@ -131,4 +268,4 @@ const logout = async (req, res) => {
   res.json({ message: 'Logged out successfully' });
 };
 
-module.exports = { login, register, logout, getAllUsers, updateUser };
+module.exports = { login, register, logout, getAllUsers, updateUser, updateProfile, deleteMe, changePassword, forgotPassword, resetPassword };

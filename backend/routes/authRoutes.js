@@ -72,6 +72,27 @@ router.patch('/users/:id', authenticate, authorize('admin', 'supervisor'), authC
 
 /**
  * @swagger
+ * /api/auth/me:
+ *   patch:
+ *     summary: Update own profile
+ *     tags: [Auth]
+ *     security:
+ *       - bearerAuth: []
+ *   delete:
+ *     summary: Deactivate own account
+ *     tags: [Auth]
+ *     security:
+ *       - bearerAuth: []
+ */
+router.patch('/me', authenticate, authController.updateProfile);
+router.patch('/change-password', authenticate, authController.changePassword);
+router.delete('/me', authenticate, authController.deleteMe);
+
+router.post('/forgot-password', authController.forgotPassword);
+router.post('/reset-password', authController.resetPassword);
+
+/**
+ * @swagger
  * /api/auth/logout:
  *   post:
  *     summary: User Logout

@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { LogIn, Phone, Lock, AlertCircle, Loader2 } from 'lucide-react';
+import { LogIn, Phone, Lock, AlertCircle, Loader2, ChevronRight, Mail } from 'lucide-react';
 
 const Login = () => {
   const [phone, setPhone] = useState('');
@@ -33,7 +33,6 @@ const Login = () => {
       <div className="absolute inset-0 z-0">
         <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-primaryClr/20 rounded-full blur-[120px] animate-pulse"></div>
         <div className="absolute bottom-[10%] right-[-5%] w-[30%] h-[30%] bg-accentClr/10 rounded-full blur-[100px] animate-bounce"></div>
-        <div className="absolute top-[20%] right-[10%] w-[20%] h-[20%] bg-primaryClr/5 rounded-full blur-[80px]"></div>
       </div>
 
       <div className="w-full max-w-md relative z-10 animate-scaleIn">
@@ -42,9 +41,9 @@ const Login = () => {
           <div className="inline-block relative">
             <div className="absolute inset-0 bg-primaryClr blur-2xl opacity-20 group-hover:opacity-40 transition-opacity rounded-full"></div>
             <div className="w-24 h-24 bg-white rounded-3xl mb-6 mx-auto flex items-center justify-center shadow-2xl relative z-10 border border-white/50 transform group-hover:rotate-3 transition-transform">
-              <img 
-                src="https://img.icons8.com/isometric/512/school.png" 
-                alt="Logo" 
+              <img
+                src="/icon.png"
+                alt="Logo"
                 className="w-16 h-16 object-contain"
               />
             </div>
@@ -59,31 +58,36 @@ const Login = () => {
 
         {/* Login Form */}
         <div className="glass-card !p-10 border-t border-white/10 shadow-[0_20px_50px_rgba(0,0,0,0.5)]">
-          <div className="mb-8">
-            <h2 className="text-2xl font-bold text-primaryClrText mb-2">Welcome Back</h2>
-            <p className="text-secondaryClr text-sm">Please sign in to track behavior</p>
+          <div className="mb-8 text-center">
+            <h2 className="text-2xl font-bold text-primaryClr mb-2">Welcome Back</h2>
+            <p className="text-secondaryClr text-sm">Security Gateway / Behavior Tracking</p>
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-6">
             <div className="space-y-2">
-              <label className="text-xs font-black text-secondaryClr uppercase tracking-widest pl-1">Email Address</label>
+              <label className="text-[10px] font-black text-secondaryClr uppercase tracking-widest pl-1">Phone Number</label>
               <div className="relative group">
                 <div className="absolute left-4 top-1/2 -translate-y-1/2 text-secondaryClr group-focus-within:text-primaryClr transition-colors">
-                  <Mail size={18} />
+                  <Phone size={18} />
                 </div>
                 <input
-                  type="email"
+                  type="text"
                   required
                   className="input-field pl-12"
-                  placeholder="staff@amana.edu"
-                  value={credentials.email}
-                  onChange={(e) => setCredentials({ ...credentials, email: e.target.value })}
+                  placeholder="09..."
+                  value={phone}
+                  onChange={(e) => setPhone(e.target.value)}
                 />
               </div>
             </div>
 
             <div className="space-y-2">
-              <label className="text-xs font-black text-secondaryClr uppercase tracking-widest pl-1">Password</label>
+              <div className="flex justify-between items-center">
+                <label className="text-[10px] font-black text-secondaryClr uppercase tracking-widest pl-1">Password</label>
+                <Link to="/forgot-password" size={14} className="text-[10px] font-black text-primaryClr uppercase tracking-widest hover:underline">
+                  Forgot?
+                </Link>
+              </div>
               <div className="relative group">
                 <div className="absolute left-4 top-1/2 -translate-y-1/2 text-secondaryClr group-focus-within:text-primaryClr transition-colors">
                   <Lock size={18} />
@@ -93,16 +97,23 @@ const Login = () => {
                   required
                   className="input-field pl-12"
                   placeholder="••••••••"
-                  value={credentials.password}
-                  onChange={(e) => setCredentials({ ...credentials, password: e.target.value })}
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
                 />
               </div>
             </div>
 
+            {error && (
+              <div className="p-4 rounded-2xl bg-dangerClr/10 border border-dangerClr/20 text-dangerClr flex items-center gap-3 text-sm font-bold animate-shake">
+                <AlertCircle size={18} />
+                {error}
+              </div>
+            )}
+
             <button
               type="submit"
               disabled={isLoading}
-              className="btn-primary w-full py-4 text-sm font-bold flex items-center justify-center gap-3 group shadow-[0_10px_20px_rgba(108,93,211,0.3)] transition-all hover:shadow-[0_15px_30px_rgba(108,93,211,0.5)]"
+              className="btn-primary w-full py-4 text-sm font-black uppercase tracking-widest flex items-center justify-center gap-3 group shadow-[0_10px_20px_rgba(108,93,211,0.3)] transition-all"
             >
               {isLoading ? (
                 <Loader2 className="animate-spin" size={20} />
@@ -116,8 +127,9 @@ const Login = () => {
           </form>
 
           <div className="mt-8 pt-8 border-t border-white/5 text-center">
-            <p className="text-secondaryClr text-xs">
-              System Admin contact / technical support: 09111111111111
+            <p className="text-secondaryClr text-[10px] font-medium leading-relaxed">
+              Proprietary behavior management system for Amana Model School.
+              Unauthorized access is strictly prohibited.
             </p>
           </div>
         </div>
