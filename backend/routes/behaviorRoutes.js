@@ -98,6 +98,45 @@ router.post('/categories', authenticate, authorize('admin', 'supervisor'), behav
  */
 router.put('/categories/:id', authenticate, authorize('admin', 'supervisor'), behaviorController.updateCategory);
 
+const multer = require('multer');
+const path = require('path');
+
+// Configure multer for behavior evidence photo storage
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, 'uploads/evidence/');
+  },
+  filename: (req, file, cb) => {
+    cb(null, `evidence-${Date.now()}${path.extname(file.originalname)}`);
+  }
+});
+
+const upload = multer({ 
+  storage,
+  limits: { fileSize: 5 * 1024 * 1024 }, // 5MB limit
+  fileFilter: (req, file, cb) => {
+    const filetypes = /jpeg|jpg|png/;
+    const extname = filetypes.test(path.extname(file.originalname).toLowerCase());
+    const mimetype = filetypes.test(file.mimetype);
+    if (mimetype && extname) return cb(null, true);
+    cb(new Error('Images only (jpeg, jpg, png)!'));
+  }
+});
+
+/**
+ * @swagger
+ * /api/behaviors/records/pending:
+ *   get:
+ *     summary: Get all pending behavior records (Supervisor only)
+ *     tags: [Behaviors]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: List of pending records
+ */
+router.get('/records/pending', authenticate, authorize('supervisor', 'admin'), behaviorController.getPendingRecords);
+
 /**
  * @swagger
  * /api/behaviors/records:
@@ -109,7 +148,7 @@ router.put('/categories/:id', authenticate, authorize('admin', 'supervisor'), be
  *     requestBody:
  *       required: true
  *       content:
- *         application/json:
+ *         multipart/form-data:
  *           schema:
  *             type: object
  *             required:
@@ -128,13 +167,19 @@ router.put('/categories/:id', authenticate, authorize('admin', 'supervisor'), be
  *               incident_date:
  *                 type: string
  *                 format: date
- *               evidence_url:
+ *               evidence:
  *                 type: string
+ *                 format: binary
  *     responses:
  *       201:
  *         description: Behavior logged successfully. Pending review.
  */
-router.post('/records', authenticate, authorize('teacher', 'supervisor', 'admin'), behaviorController.logBehavior);
+router.post('/records', authenticate, authorize('teacher', 'supervisor', 'admin'), upload.single('evidence'), (req, res, next) => {
+  if (req.file) {
+    req.body.evidence_url = `/uploads/evidence/${req.file.filename}`;
+  }
+  next();
+}, behaviorController.logBehavior);
 
 /**
  * @swagger

@@ -16,7 +16,12 @@
     background-color: theme('colors.bgDarkAll');
   }
 
-  h1, h2, h3, h4, h5, h6 {
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
     @apply font-display font-semibold tracking-wide;
   }
 }
@@ -53,6 +58,7 @@
     opacity: 0;
     transform: translateY(20px);
   }
+
   to {
     opacity: 1;
     transform: translateY(0);

@@ -9,7 +9,7 @@ const getBehaviorCategories = async (req, res) => {
     const [rows] = await db.query('SELECT * FROM behavior_categories WHERE is_active = true ORDER BY name');
     res.json(rows);
   } catch (error) {
-    console.error('Database query error:', error);
+    console.error('Error fetching categories:', error);
     res.status(500).json({ error: 'Internal Server Error' });
   }
 };
@@ -103,6 +103,28 @@ const logBehavior = async (req, res) => {
 };
 
 // Review and Approve/Reject Behavior (Supervisor task)
+const getPendingRecords = async (req, res) => {
+  try {
+    const query = `
+      SELECT br.*, 
+             s.first_name as student_first_name, s.last_name as student_last_name, s.admission_number,
+             bc.name as category_name, bc.type as category_type,
+             u.first_name as teacher_first_name, u.last_name as teacher_last_name
+      FROM behavior_records br
+      JOIN students s ON br.student_id = s.id
+      JOIN behavior_categories bc ON br.category_id = bc.id
+      JOIN users u ON br.recorded_by = u.id
+      WHERE br.status = 'pending'
+      ORDER BY br.created_at DESC
+    `;
+    const [rows] = await db.query(query);
+    res.json(rows);
+  } catch (error) {
+    console.error('Error fetching pending records:', error);
+    res.status(500).json({ error: 'Internal Server Error' });
+  }
+};
+
 const reviewBehavior = async (req, res) => {
   const { id } = req.params;
   const { status, comment } = req.body;
@@ -156,10 +178,63 @@ const reviewBehavior = async (req, res) => {
   }
 };
 
+// Supervisor overview stats
+const getSupervisorStats = async (req, res) => {
+  try {
+    // Count records grouped by status
+    const [statusCounts] = await db.query(`
+      SELECT status, COUNT(*) as count
+      FROM behavior_records
+      GROUP BY status
+    `);
+
+    // 7-day incident trend
+    const [recentActivity] = await db.query(`
+      SELECT DATE(created_at) as date, COUNT(*) as count
+      FROM behavior_records
+      WHERE created_at >= DATE_SUB(NOW(), INTERVAL 7 DAY)
+      GROUP BY DATE(created_at)
+      ORDER BY date ASC
+    `);
+
+    // Top 5 behavior categories by usage
+    const [topCategories] = await db.query(`
+      SELECT bc.name, bc.type, COUNT(br.id) as count
+      FROM behavior_records br
+      JOIN behavior_categories bc ON br.category_id = bc.id
+      GROUP BY bc.id, bc.name, bc.type
+      ORDER BY count DESC
+      LIMIT 5
+    `);
+
+    // Totals
+    const [totals] = await db.query(`
+      SELECT 
+        COUNT(*) as total_records,
+        SUM(CASE WHEN status = 'pending' THEN 1 ELSE 0 END) as pending,
+        SUM(CASE WHEN status = 'approved' THEN 1 ELSE 0 END) as approved,
+        SUM(CASE WHEN status = 'rejected' THEN 1 ELSE 0 END) as rejected
+      FROM behavior_records
+    `);
+
+    res.json({
+      totals: totals[0],
+      statusCounts: statusCounts.reduce((acc, row) => { acc[row.status] = Number(row.count); return acc; }, {}),
+      recentActivity,
+      topCategories
+    });
+  } catch (error) {
+    console.error('Error fetching supervisor stats:', error);
+    res.status(500).json({ error: 'Internal Server Error' });
+  }
+};
+
 module.exports = {
   getBehaviorCategories,
   createCategory,
   updateCategory,
   logBehavior,
-  reviewBehavior
+  reviewBehavior,
+  getPendingRecords,
+  getSupervisorStats
 };
