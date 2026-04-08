@@ -1,12 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../api/axios';
-import { 
-  Users, 
-  Search, 
-  Filter, 
-  ExternalLink, 
-  Trophy, 
+import {
+  Users,
+  Search,
+  Filter,
+  ExternalLink,
+  Trophy,
   AlertTriangle,
   Loader2,
   Calendar,
@@ -45,7 +45,7 @@ const Students = () => {
 
   const filteredStudents = students.filter(s => {
     const matchesSearch = `${s.first_name} ${s.last_name}`.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                          s.admission_number.toLowerCase().includes(searchTerm.toLowerCase());
+      s.admission_number.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesClass = selectedClass === 'all' || s.class_id === selectedClass;
     return matchesSearch && matchesClass;
   });
@@ -66,7 +66,7 @@ const Students = () => {
           <h1 className="text-3xl font-display font-bold text-primaryClr mb-2">Student Registry</h1>
           <p className="text-secondaryClr">Manage and monitor students across all grades and sections.</p>
         </div>
-        
+
         <div className="flex items-center gap-4 bg-bgDark/60 p-4 rounded-2xl border border-white/5 shadow-xl">
           <div className="w-12 h-12 rounded-xl bg-primaryClr/20 flex items-center justify-center text-primaryClr">
             <Users size={24} />
@@ -82,7 +82,7 @@ const Students = () => {
       <div className="glass-card !p-4 flex flex-col lg:flex-row items-center gap-4">
         <div className="relative flex-1 w-full text-secondaryClr">
           <Search size={20} className="absolute left-4 top-1/2 -translate-y-1/2 opacity-50" />
-          <input 
+          <input
             type="text"
             placeholder="Search by name or admission number..."
             className="input-field pl-12 py-3 w-full"
@@ -90,11 +90,11 @@ const Students = () => {
             onChange={(e) => setSearchTerm(e.target.value)}
           />
         </div>
-        
+
         <div className="flex items-center gap-4 w-full lg:w-auto">
           <div className="flex items-center gap-2 bg-bgDark rounded-xl border border-white/5 px-2">
             <Filter size={18} className="text-secondaryClr ml-2 opacity-50" />
-            <select 
+            <select
               className="bg-transparent border-none py-3 pr-8 text-sm focus:ring-0 text-primaryClrText cursor-pointer"
               value={selectedClass}
               onChange={(e) => setSelectedClass(e.target.value)}
@@ -109,13 +109,13 @@ const Students = () => {
           </div>
 
           <div className="flex bg-bgDark rounded-xl border border-white/5 p-1">
-            <button 
+            <button
               onClick={() => setViewMode('grid')}
               className={`p-2 rounded-lg transition-all ${viewMode === 'grid' ? 'bg-primaryClr text-white shadow-lg' : 'text-secondaryClr hover:text-primaryClrText'}`}
             >
               <LayoutGrid size={20} />
             </button>
-            <button 
+            <button
               onClick={() => setViewMode('table')}
               className={`p-2 rounded-lg transition-all ${viewMode === 'table' ? 'bg-primaryClr text-white shadow-lg' : 'text-secondaryClr hover:text-primaryClrText'}`}
             >
@@ -134,7 +134,7 @@ const Students = () => {
           <h3 className="text-2xl font-bold text-primaryClrText mb-2">No Students Found</h3>
           <p className="text-secondaryClr">Try adjusting your search or filters to find what you're looking for.</p>
           {searchTerm && (
-            <button 
+            <button
               onClick={() => setSearchTerm('')}
               className="mt-6 text-primaryClr hover:underline flex items-center gap-2"
             >
@@ -149,9 +149,9 @@ const Students = () => {
               <div className="p-6 flex items-start gap-5">
                 <div className="relative">
                   <div className="w-20 h-20 rounded-2xl border-2 border-white/5 overflow-hidden shadow-2xl relative z-10">
-                    <img 
-                      src={student.photo_url || student.student_photo || `https://ui-avatars.com/api/?name=${student.first_name}+${student.last_name}&background=6c5dd3&color=fff`} 
-                      alt="student" 
+                    <img
+                      src={student.photo_url || student.student_photo || `https://ui-avatars.com/api/?name=${student.first_name}+${student.last_name}&background=6c5dd3&color=fff`}
+                      alt="student"
                       className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
                     />
                   </div>
@@ -159,7 +159,7 @@ const Students = () => {
                     <UserCheck size={16} />
                   </div>
                 </div>
-                
+
                 <div className="flex-1 min-w-0">
                   <div className="flex items-start justify-between mb-1">
                     <h3 className="font-bold text-lg truncate group-hover:text-primaryClr transition-colors">{student.first_name} {student.last_name}</h3>
@@ -171,7 +171,7 @@ const Students = () => {
                       Grade {student.grade_level}-{student.section}
                     </span>
                   </p>
-                  
+
                   <div className="flex items-center gap-3">
                     <div className={`flex items-center gap-2 px-3 py-1.5 rounded-xl border ${student.current_points >= 0 ? 'bg-accentClr/10 text-accentClr border-accentClr/20' : 'bg-dangerClr/10 text-dangerClr border-dangerClr/20'}`}>
                       {student.current_points >= 0 ? <Trophy size={14} /> : <AlertTriangle size={14} />}
@@ -180,13 +180,13 @@ const Students = () => {
                   </div>
                 </div>
               </div>
-              
+
               <div className="px-6 py-4 bg-bgDarkAll/50 border-t border-white/5 flex items-center justify-between">
                 <div className="flex items-center gap-2 text-[10px] text-secondaryClr uppercase tracking-widest">
                   <Calendar size={12} />
                   Joined {new Date(student.created_at).toLocaleDateString()}
                 </div>
-                <button 
+                <button
                   onClick={() => navigate(`/students/${student.id}`)}
                   className="p-2 rounded-lg hover:bg-primaryClr/10 text-secondaryClr hover:text-primaryClr transition-all group-hover:translate-x-1"
                 >
@@ -215,9 +215,9 @@ const Students = () => {
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-4">
                         <div className="w-10 h-10 rounded-xl border border-white/5 overflow-hidden shadow-lg">
-                          <img 
-                            src={student.photo_url || student.student_photo || `https://ui-avatars.com/api/?name=${student.first_name}+${student.last_name}&background=6c5dd3&color=fff`} 
-                            alt="student" 
+                          <img
+                            src={student.photo_url || student.student_photo || `https://ui-avatars.com/api/?name=${student.first_name}+${student.last_name}&background=6c5dd3&color=fff`}
+                            alt="student"
                             className="w-full h-full object-cover"
                           />
                         </div>
@@ -232,7 +232,7 @@ const Students = () => {
                       </span>
                     </td>
                     <td className="px-6 py-4 text-right">
-                      <button 
+                      <button
                         onClick={() => navigate(`/students/${student.id}`)}
                         className="p-2 rounded-lg hover:bg-primaryClr/10 text-secondaryClr hover:text-primaryClr transition-all"
                       >

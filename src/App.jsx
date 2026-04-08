@@ -144,7 +144,7 @@ function App() {
           <Route 
             path="/report/:id" 
             element={
-              <ProtectedRoute allowedRoles={['supervisor', 'admin', 'manager']}>
+              <ProtectedRoute allowedRoles={['supervisor', 'admin', 'manager', 'teacher']}>
                 <StudentReport />
               </ProtectedRoute>
             } 

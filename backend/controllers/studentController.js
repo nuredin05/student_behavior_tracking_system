@@ -1,6 +1,7 @@
 const db = require('../config/db');
 const { v4: uuidv4 } = require('uuid');
 const fs = require('fs');
+const path = require('path');
 const xlsx = require('xlsx');
 
 const getAllStudents = async (req, res) => {
@@ -43,7 +44,7 @@ const getStudentById = async (req, res) => {
       LEFT JOIN classes c ON s.class_id = c.id
       WHERE s.id = ?
     `, [id]);
-    
+
     if (student.length === 0) {
       return res.status(404).json({ error: 'Student not found' });
     }
@@ -148,7 +149,7 @@ const createStudent = async (req, res) => {
       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `, [studentId, admission_number, first_name, last_name, date_of_birth || null, gender || null, class_id || null, photo_url, parent_phone || null, officerId]);
 
-    res.status(201).json({ 
+    res.status(201).json({
       message: 'Student created successfully',
       student: { id: studentId, admission_number, first_name, last_name, photo_url }
     });
@@ -191,11 +192,11 @@ const deleteStudent = async (req, res) => {
   const { id } = req.params;
   try {
     const [result] = await db.query('DELETE FROM students WHERE id = ?', [id]);
-    
+
     if (result.affectedRows === 0) {
       return res.status(404).json({ error: 'Student not found' });
     }
-    
+
     res.json({ message: 'Student deleted successfully' });
   } catch (error) {
     console.error('Error deleting student:', error);
@@ -213,8 +214,9 @@ const bulkImportStudents = async (req, res) => {
   let skipCount = 0;
 
   try {
-    // Read the Excel file
-    const workbook = xlsx.readFile(req.file.path);
+    // Use absolute path so xlsx.readFile works regardless of cwd
+    const absolutePath = path.resolve(req.file.path);
+    const workbook = xlsx.readFile(absolutePath);
     const sheetName = workbook.SheetNames[0];
     const results = xlsx.utils.sheet_to_json(workbook.Sheets[sheetName]);
 
@@ -233,7 +235,10 @@ const bulkImportStudents = async (req, res) => {
       for (const key in rawRow) {
         if (key) {
           const normalizedKey = key.toLowerCase().replace(/[\s_]+/g, '');
-          row[normalizedKey] = rawRow[key];
+          // Force all values to strings to handle numeric Excel cells
+          row[normalizedKey] = rawRow[key] !== undefined && rawRow[key] !== null
+            ? String(rawRow[key]).trim()
+            : '';
         }
       }
 
@@ -241,17 +246,29 @@ const bulkImportStudents = async (req, res) => {
       const first_name = row.firstname;
       const last_name = row.lastname;
       const gender = (row.gender || 'male').toLowerCase();
-      const date_of_birth = row.dateofbirth;
-      const parent_phone = row.parentphone;
+      const parent_phone = row.parentphone || null;
       const grade = row.grade;
       const section = row.section;
+
+      // Handle Excel date serial number → real date string
+      let date_of_birth = null;
+      if (row.dateofbirth) {
+        // If it's a numeric serial (e.g., 44000), convert via xlsx utility
+        const rawDob = rawRow[Object.keys(rawRow).find(k => k.toLowerCase().replace(/[\s_]+/g, '') === 'dateofbirth')];
+        if (typeof rawDob === 'number') {
+          const jsDate = xlsx.SSF.parse_date_code(rawDob);
+          date_of_birth = `${jsDate.y}-${String(jsDate.m).padStart(2, '0')}-${String(jsDate.d).padStart(2, '0')}`;
+        } else {
+          date_of_birth = row.dateofbirth || null;
+        }
+      }
 
       if (!admission_number || !first_name || !last_name) {
         skipCount++;
         continue;
       }
 
-      // Resolve class_id
+      // Resolve class_id  
       let resolvedClassId = null;
       if (grade && section) {
         const classKey = `${grade}${section}`.toLowerCase().replace(/\s/g, '');
@@ -270,29 +287,28 @@ const bulkImportStudents = async (req, res) => {
         INSERT INTO students (id, admission_number, first_name, last_name, gender, date_of_birth, class_id, parent_phone, registered_by, photo_url)
         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
       `, [
-        studentId, 
-        admission_number, 
-        first_name, 
-        last_name, 
-        ['male', 'female', 'other'].includes(gender) ? gender : 'male', 
-        date_of_birth || null, 
-        resolvedClassId, 
-        parent_phone || null,
+        studentId,
+        admission_number,
+        first_name,
+        last_name,
+        ['male', 'female', 'other'].includes(gender) ? gender : 'male',
+        date_of_birth,
+        resolvedClassId,
+        parent_phone,
         officerId,
-        null // No default photo for bulk import
+        '' // No default photo for bulk import (use empty string to satisfy NOT NULL constraint)
       ]);
       successCount++;
     }
-    
+
     // Clean up temp file
-    fs.unlink(req.file.path, (err) => { if(err) console.error(err); });
+    fs.unlink(req.file.path, (err) => { if (err) console.error('Cleanup error:', err); });
 
     res.status(200).json({ message: 'Import complete', successCount, skipCount });
   } catch (error) {
-    console.error('Bulk import error:', error);
-    // Try to clean up file even if error occurs
-    if (req.file.path) fs.unlink(req.file.path, () => {});
-    res.status(500).json({ error: 'Bulk import logic failed: ' + error.message });
+    console.error('Bulk import error:', error.message, error.stack);
+    if (req.file && req.file.path) fs.unlink(req.file.path, () => { });
+    res.status(500).json({ error: 'Bulk import failed: ' + error.message });
   }
 };
 
@@ -300,7 +316,7 @@ const getNextAdmissionNumber = async (req, res) => {
   try {
     const year = new Date().getFullYear();
     const prefix = `AMSS/${year}/`;
-    
+
     // Find the highest sequence number for this year
     const [rows] = await db.query(`
       SELECT admission_number 
@@ -331,7 +347,7 @@ const downloadStudentTemplate = async (req, res) => {
   try {
     const data = [
       {
-        "Admission Number": "STU-001",
+        "Admission Number": "AMSS/9A/001",
         "First Name": "John",
         "Last Name": "Doe",
         "Gender": "male",
@@ -339,16 +355,6 @@ const downloadStudentTemplate = async (req, res) => {
         "Parent Phone": "0911223344",
         "Grade": "9",
         "Section": "A"
-      },
-      {
-        "Admission Number": "STU-002",
-        "First Name": "Jane",
-        "Last Name": "Smith",
-        "Gender": "female",
-        "Date of Birth": "2011-08-20",
-        "Parent Phone": "0922334455",
-        "Grade": "10",
-        "Section": "B"
       }
     ];
 

@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 const api = axios.create({
-  baseURL: '/api',
+  baseURL: '/api',  // Uses Vite proxy → http://localhost:5000/api (avoids CORS on file uploads)
   headers: {
     'Content-Type': 'application/json',
   },

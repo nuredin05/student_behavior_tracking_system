@@ -21,11 +21,25 @@ const upload = multer({
   fileFilter: (req, file, cb) => {
     const filetypes = /jpeg|jpg|png|csv|xlsx|xls/;
     const extname = filetypes.test(path.extname(file.originalname).toLowerCase());
-    
     if (extname) return cb(null, true);
     cb(new Error('Invalid file type! Allowed: jpeg, jpg, png, csv, xlsx, xls'));
   }
 });
+
+// Multer requires (req, res, next) — wrap in a Promise to use async/await
+const uploadAsync = (fieldName) => async (req, res, next) => {
+  try {
+    await new Promise((resolve, reject) => {
+      upload.single(fieldName)(req, res, (err) => {
+        if (err) reject(err);
+        else resolve();
+      });
+    });
+    next();
+  } catch (err) {
+    next(err);
+  }
+};
 
 // GET all students
 router.get('/', authenticate, studentController.getAllStudents);
@@ -46,10 +60,10 @@ router.get('/:id/full-profile', authenticate, studentController.getStudentFullPr
 router.get('/:id', authenticate, studentController.getStudentById);
 
 // POST bulk import student Excel (Officer, Supervisor, Admin)
-router.post('/bulk', authenticate, authorize('officer', 'supervisor', 'admin'), upload.single('excel_file'), studentController.bulkImportStudents);
+router.post('/bulk', authenticate, authorize('officer', 'supervisor', 'admin'), uploadAsync('excel_file'), studentController.bulkImportStudents);
 
 // POST create student (Officer, Supervisor, Admin)
-router.post('/', authenticate, authorize('officer', 'supervisor', 'admin'), upload.single('photo'), (req, res, next) => {
+router.post('/', authenticate, authorize('officer', 'supervisor', 'admin'), uploadAsync('photo'), (req, res, next) => {
   if (req.file) {
     req.body.photo_url = `/uploads/students/${req.file.filename}`;
   }

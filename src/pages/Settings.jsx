@@ -1,15 +1,15 @@
 import React, { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import api from '../api/axios';
-import { 
-  User, 
-  Mail, 
-  Phone, 
-  Shield, 
-  LogOut, 
-  Bell, 
-  Moon, 
-  Trash2, 
+import {
+  User,
+  Mail,
+  Phone,
+  Shield,
+  LogOut,
+  Bell,
+  Moon,
+  Trash2,
   CheckCircle,
   AlertCircle,
   Loader2,
@@ -83,12 +83,12 @@ const Settings = () => {
   };
 
   const handleDeleteAccount = async () => {
-    if (!window.confirm('Are you absolutely sure? This will deactivate your account and you will be logged out immediately.')) return;
+    if (!window.confirm('Are you sure you want to deactivate your account? You will be logged out. All your data is preserved for auditing — no records are deleted.')) return;
     try {
       await api.delete('/auth/me');
       logout();
     } catch (error) {
-      alert('Failed to deactivate account');
+      alert('Failed to deactivate account. Please try again or contact an administrator.');
     }
   };
 
@@ -124,33 +124,30 @@ const Settings = () => {
         {/* Navigation Sidebar */}
         <div className="lg:col-span-1 space-y-4">
           <div className="glass-card p-2 flex flex-col gap-1">
-            <button 
+            <button
               onClick={() => setActiveTab('profile')}
-              className={`w-full text-left p-4 rounded-2xl font-bold flex items-center justify-between transition-all group ${
-                activeTab === 'profile' ? 'bg-primaryClr text-white shadow-xl translate-x-1' : 'text-secondaryClr hover:bg-white/5 hover:text-primaryClr'
-              }`}
+              className={`w-full text-left p-4 rounded-2xl font-bold flex items-center justify-between transition-all group ${activeTab === 'profile' ? 'bg-primaryClr text-white shadow-xl translate-x-1' : 'text-secondaryClr hover:bg-white/5 hover:text-primaryClr'
+                }`}
             >
               <div className="flex items-center gap-3">
                 <User size={18} /> Profile
               </div>
               <ChevronRight size={14} className={activeTab === 'profile' ? 'opacity-100' : 'opacity-0 group-hover:opacity-40'} />
             </button>
-            <button 
+            <button
               onClick={() => setActiveTab('notifications')}
-              className={`w-full text-left p-4 rounded-2xl font-bold flex items-center justify-between transition-all group ${
-                activeTab === 'notifications' ? 'bg-primaryClr text-white shadow-xl translate-x-1' : 'text-secondaryClr hover:bg-white/5 hover:text-primaryClr'
-              }`}
+              className={`w-full text-left p-4 rounded-2xl font-bold flex items-center justify-between transition-all group ${activeTab === 'notifications' ? 'bg-primaryClr text-white shadow-xl translate-x-1' : 'text-secondaryClr hover:bg-white/5 hover:text-primaryClr'
+                }`}
             >
               <div className="flex items-center gap-3">
                 <Bell size={18} /> Notifications
               </div>
               <ChevronRight size={14} className={activeTab === 'notifications' ? 'opacity-100' : 'opacity-0 group-hover:opacity-40'} />
             </button>
-            <button 
+            <button
               onClick={() => setActiveTab('security')}
-              className={`w-full text-left p-4 rounded-2xl font-bold flex items-center justify-between transition-all group ${
-                activeTab === 'security' ? 'bg-primaryClr text-white shadow-xl translate-x-1' : 'text-secondaryClr hover:bg-white/5 hover:text-primaryClr'
-              }`}
+              className={`w-full text-left p-4 rounded-2xl font-bold flex items-center justify-between transition-all group ${activeTab === 'security' ? 'bg-primaryClr text-white shadow-xl translate-x-1' : 'text-secondaryClr hover:bg-white/5 hover:text-primaryClr'
+                }`}
             >
               <div className="flex items-center gap-3">
                 <Shield size={18} /> Security
@@ -159,12 +156,6 @@ const Settings = () => {
             </button>
           </div>
 
-          <button 
-            onClick={logout}
-            className="w-full p-5 rounded-3xl bg-dangerClr/10 border border-dangerClr/20 text-dangerClr hover:bg-dangerClr transition-all hover:text-white flex items-center justify-center gap-3 font-black uppercase text-xs tracking-widest"
-          >
-            <LogOut size={18} /> Sign Out Account
-          </button>
         </div>
 
         {/* Content Area */}
@@ -175,24 +166,24 @@ const Settings = () => {
                 <h3 className="text-xl font-bold mb-8 flex items-center gap-3">
                   <User className="text-primaryClr" /> Personal Details
                 </h3>
-                
+
                 <form onSubmit={handleUpdateProfile} className="space-y-6">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div className="space-y-2">
                       <label className="text-[10px] font-black text-secondaryClr uppercase tracking-widest pl-1">First Name</label>
-                      <input 
-                        type="text" 
-                        className="input-field" 
-                        value={firstName} 
+                      <input
+                        type="text"
+                        className="input-field"
+                        value={firstName}
                         onChange={(e) => setFirstName(e.target.value)}
                       />
                     </div>
                     <div className="space-y-2">
                       <label className="text-[10px] font-black text-secondaryClr uppercase tracking-widest pl-1">Last Name</label>
-                      <input 
-                        type="text" 
-                        className="input-field" 
-                        value={lastName} 
+                      <input
+                        type="text"
+                        className="input-field"
+                        value={lastName}
                         onChange={(e) => setLastName(e.target.value)}
                       />
                     </div>
@@ -200,10 +191,10 @@ const Settings = () => {
                       <label className="text-[10px] font-black text-secondaryClr uppercase tracking-widest pl-1">Email Address</label>
                       <div className="relative">
                         <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-secondaryClr" size={16} />
-                        <input 
-                          type="email" 
-                          className="input-field pl-12" 
-                          value={email} 
+                        <input
+                          type="email"
+                          className="input-field pl-12"
+                          value={email}
                           onChange={(e) => setEmail(e.target.value)}
                         />
                       </div>
@@ -217,8 +208,8 @@ const Settings = () => {
                     </div>
                   </div>
 
-                  <button 
-                    type="submit" 
+                  <button
+                    type="submit"
                     disabled={isLoading}
                     className="btn-primary px-10 py-4 flex items-center justify-center gap-2 group shadow-xl"
                   >
@@ -235,11 +226,11 @@ const Settings = () => {
                   <h4 className="text-xl font-bold text-dangerClr mb-1">Deactivate Account</h4>
                   <p className="text-sm text-secondaryClr max-w-sm">This is a soft-delete—your account will be hidden from reports but data will remain for auditing.</p>
                 </div>
-                <button 
+                <button
                   onClick={handleDeleteAccount}
                   className="relative z-10 px-8 py-4 rounded-2xl border border-dangerClr/30 text-dangerClr hover:bg-dangerClr hover:text-white transition-all font-black text-xs uppercase tracking-widest"
                 >
-                  Proceed to Delete
+                  Deactivate My Account
                 </button>
               </div>
             </div>
@@ -256,7 +247,7 @@ const Settings = () => {
                     <p className="font-bold text-lg mb-1">Push Notifications</p>
                     <p className="text-sm text-secondaryClr">Get alerted on every approved incident involving your students.</p>
                   </div>
-                  <button 
+                  <button
                     onClick={toggleDarkMode}
                     className={`w-14 h-7 rounded-full p-1 flex transition-all ${darkMode ? 'bg-primaryClr justify-end' : 'bg-white/10 justify-start'}`}
                   >
@@ -268,7 +259,7 @@ const Settings = () => {
                     <p className="font-bold text-lg mb-1">Weekly Digest</p>
                     <p className="text-sm text-secondaryClr">Receive a summarized performance report every Friday.</p>
                   </div>
-                  <button 
+                  <button
                     onClick={toggleNotifs}
                     className={`w-14 h-7 rounded-full p-1 flex transition-all ${emailNotifs ? 'bg-primaryClr justify-end' : 'bg-white/10 justify-start'}`}
                   >
@@ -284,23 +275,23 @@ const Settings = () => {
               <h3 className="text-xl font-bold mb-8 flex items-center gap-3">
                 <Lock className="text-primaryClr" /> Security & Access
               </h3>
-              
+
               <form onSubmit={handleChangePassword} className="space-y-8">
                 <div className="max-w-md space-y-6">
                   <div className="space-y-2">
                     <label className="text-[10px] font-black text-secondaryClr uppercase tracking-widest pl-1">Current Password</label>
                     <div className="relative">
                       <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-secondaryClr" size={16} />
-                      <input 
-                        type={showPass ? 'text' : 'password'} 
+                      <input
+                        type={showPass ? 'text' : 'password'}
                         className="input-field pl-12"
                         value={currentPassword}
                         onChange={(e) => setCurrentPassword(e.target.value)}
                         required
                         placeholder="••••••••"
                       />
-                      <button 
-                        type="button" 
+                      <button
+                        type="button"
                         onClick={() => setShowPass(!showPass)}
                         className="absolute right-4 top-1/2 -translate-y-1/2 text-secondaryClr"
                       >
@@ -311,8 +302,8 @@ const Settings = () => {
 
                   <div className="space-y-2">
                     <label className="text-[10px] font-black text-secondaryClr uppercase tracking-widest pl-1">New Password</label>
-                    <input 
-                      type="password" 
+                    <input
+                      type="password"
                       className="input-field"
                       value={newPassword}
                       onChange={(e) => setNewPassword(e.target.value)}
@@ -323,8 +314,8 @@ const Settings = () => {
 
                   <div className="space-y-2">
                     <label className="text-[10px] font-black text-secondaryClr uppercase tracking-widest pl-1">Confirm New Password</label>
-                    <input 
-                      type="password" 
+                    <input
+                      type="password"
                       className="input-field"
                       value={confirmPassword}
                       onChange={(e) => setConfirmPassword(e.target.value)}
@@ -334,8 +325,8 @@ const Settings = () => {
                   </div>
                 </div>
 
-                <button 
-                  type="submit" 
+                <button
+                  type="submit"
                   disabled={isLoading}
                   className="btn-primary px-10 py-4 flex items-center justify-center gap-2 shadow-xl"
                 >
@@ -346,9 +337,8 @@ const Settings = () => {
           )}
 
           {status.message && (
-            <div className={`mt-6 p-5 rounded-2xl flex items-center gap-3 text-sm font-bold animate-shake ${
-              status.type === 'success' ? 'bg-accentClr/10 text-accentClr border border-accentClr/20' : 'bg-dangerClr/10 text-dangerClr border border-dangerClr/20'
-            }`}>
+            <div className={`mt-6 p-5 rounded-2xl flex items-center gap-3 text-sm font-bold animate-shake ${status.type === 'success' ? 'bg-accentClr/10 text-accentClr border border-accentClr/20' : 'bg-dangerClr/10 text-dangerClr border border-dangerClr/20'
+              }`}>
               {status.type === 'success' ? <CheckCircle size={20} /> : <AlertCircle size={20} />}
               <span>{status.message}</span>
             </div>

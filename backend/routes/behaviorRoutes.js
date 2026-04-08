@@ -123,6 +123,21 @@ const upload = multer({
   }
 });
 
+// Multer requires (req, res, next) — wrap in a Promise to use async/await
+const uploadAsync = (fieldName) => async (req, res, next) => {
+  try {
+    await new Promise((resolve, reject) => {
+      upload.single(fieldName)(req, res, (err) => {
+        if (err) reject(err);
+        else resolve();
+      });
+    });
+    next();
+  } catch (err) {
+    next(err);
+  }
+};
+
 /**
  * @swagger
  * /api/behaviors/records/history:
@@ -216,7 +231,7 @@ router.get('/analytics', authenticate, authorize('supervisor', 'admin'), behavio
  *       201:
  *         description: Behavior logged successfully. Pending review.
  */
-router.post('/records', authenticate, authorize('teacher', 'supervisor', 'admin'), upload.single('evidence'), (req, res, next) => {
+router.post('/records', authenticate, authorize('teacher', 'supervisor', 'admin'), uploadAsync('evidence'), (req, res, next) => {
   if (req.file) {
     req.body.evidence_url = `/uploads/evidence/${req.file.filename}`;
   }
