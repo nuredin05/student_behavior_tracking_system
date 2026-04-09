@@ -18,23 +18,42 @@ import {
   ChevronRight,
   Menu,
   X,
-  Trophy
+  Trophy,
+  ArrowUp
 } from 'lucide-react';
 
 const Landing = () => {
   const navigate = useNavigate();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
+  const [showScrollTop, setShowScrollTop] = useState(false);
   const [topStudent, setTopStudent] = useState(null);
   const [topStudents, setTopStudents] = useState([]);
+  const [currentSlide, setCurrentSlide] = useState(0);
+
+  // Carousel images
+  const carouselImages = [
+    '/src/assets/hero/hero1.jpg',
+    '/src/assets/hero/hero2.jpg',
+    '/src/assets/hero/hero3.jpg'
+  ];
 
   useEffect(() => {
     const handleScroll = () => {
       setScrolled(window.scrollY > 50);
+      setShowScrollTop(window.scrollY > 400);
     };
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
+
+  // Auto-advance carousel
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setCurrentSlide((prev) => (prev + 1) % carouselImages.length);
+    }, 5000); // Change slide every 5 seconds
+    return () => clearInterval(interval);
+  }, [carouselImages.length]);
 
   // Fetch top student
   useEffect(() => {
@@ -106,6 +125,13 @@ const Landing = () => {
     { value: '2,000+', label: 'Behavior Logs', icon: FileText },
     { value: '98%', label: 'Satisfaction Rate', icon: Star }
   ];
+
+  const scrollToTop = () => {
+    window.scrollTo({
+      top: 0,
+      behavior: 'smooth'
+    });
+  };
 
   const testimonials = [
     {
@@ -292,7 +318,7 @@ const Landing = () => {
               )}
             </div>
 
-            {/* Right Content - Hero Image/Illustration */}
+            {/* Right Content - Hero Carousel */}
             <div className="relative animate-fadeInUp" style={{ animationDelay: '0.2s' }}>
               <div className="relative">
                 {/* Floating Cards */}
@@ -345,41 +371,58 @@ const Landing = () => {
                   </div>
                 </div>
 
-                {/* Main Dashboard Preview */}
-                <div className="glass-card !p-6 shadow-2xl relative z-10">
-                  <div className="space-y-4">
-                    <div className="flex items-center justify-between">
-                      <h3 className="font-bold text-sm">Behavior Dashboard</h3>
-                      <span className="w-2 h-2 rounded-full bg-accentClr animate-pulse"></span>
-                    </div>
-                    
-                    <div className="grid grid-cols-2 gap-3">
-                      <div className="bg-bgDarkAll/50 p-4 rounded-xl">
-                        <p className="text-xs text-secondaryClr mb-1">Total Students</p>
-                        <p className="text-2xl font-black text-primaryClr">524</p>
+                {/* Hero Image Carousel */}
+                <div className="relative rounded-3xl overflow-hidden shadow-2xl border-4 border-white/10 z-10">
+                  <div className="relative h-[400px] md:h-[500px]">
+                    {carouselImages.map((image, index) => (
+                      <div
+                        key={index}
+                        className={`absolute inset-0 transition-opacity duration-1000 ${
+                          index === currentSlide ? 'opacity-100' : 'opacity-0'
+                        }`}
+                      >
+                        <img
+                          src={image}
+                          alt={`School Hero ${index + 1}`}
+                          className="w-full h-full object-cover"
+                        />
+                        {/* Gradient Overlay */}
+                        <div className="absolute inset-0 bg-gradient-to-t from-bgDarkAll via-transparent to-transparent"></div>
                       </div>
-                      <div className="bg-bgDarkAll/50 p-4 rounded-xl">
-                        <p className="text-xs text-secondaryClr mb-1">Active Logs</p>
-                        <p className="text-2xl font-black text-accentClr">1,847</p>
-                      </div>
-                    </div>
-
-                    <div className="space-y-2">
-                      {[85, 70, 95, 60].map((width, i) => (
-                        <div key={i} className="flex items-center gap-3">
-                          <div className="w-8 h-8 rounded-lg bg-white/5"></div>
-                          <div className="flex-1">
-                            <div className="h-2 bg-white/5 rounded-full overflow-hidden">
-                              <div 
-                                className="h-full bg-gradient-to-r from-primaryClr to-accentClr rounded-full transition-all duration-1000"
-                                style={{ width: `${width}%` }}
-                              ></div>
-                            </div>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
+                    ))}
                   </div>
+
+                  {/* Carousel Controls */}
+                  <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex gap-2 z-20">
+                    {carouselImages.map((_, index) => (
+                      <button
+                        key={index}
+                        onClick={() => setCurrentSlide(index)}
+                        className={`w-2 h-2 rounded-full transition-all duration-300 ${
+                          index === currentSlide
+                            ? 'bg-primaryClr w-8'
+                            : 'bg-white/30 hover:bg-white/50'
+                        }`}
+                        aria-label={`Go to slide ${index + 1}`}
+                      />
+                    ))}
+                  </div>
+
+                  {/* Navigation Arrows */}
+                  <button
+                    onClick={() => setCurrentSlide((prev) => (prev - 1 + carouselImages.length) % carouselImages.length)}
+                    className="absolute left-4 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-white/10 backdrop-blur-md hover:bg-white/20 flex items-center justify-center transition-all z-20"
+                    aria-label="Previous slide"
+                  >
+                    <ChevronRight size={20} className="rotate-180 text-white" />
+                  </button>
+                  <button
+                    onClick={() => setCurrentSlide((prev) => (prev + 1) % carouselImages.length)}
+                    className="absolute right-4 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-white/10 backdrop-blur-md hover:bg-white/20 flex items-center justify-center transition-all z-20"
+                    aria-label="Next slide"
+                  >
+                    <ChevronRight size={20} className="text-white" />
+                  </button>
                 </div>
               </div>
             </div>
@@ -627,6 +670,17 @@ const Landing = () => {
           </div>
         </div>
       </footer>
+
+      {/* Scroll to Top Button */}
+      {showScrollTop && (
+        <button
+          onClick={scrollToTop}
+          className="fixed bottom-8 right-8 z-50 w-12 h-12 bg-primaryClr hover:bg-primaryClrLight text-white rounded-full shadow-2xl shadow-primaryClr/30 flex items-center justify-center transition-all duration-300 hover:scale-110 active:scale-95 animate-fadeInUp"
+          aria-label="Scroll to top"
+        >
+          <ArrowUp size={20} />
+        </button>
+      )}
     </div>
   );
 };

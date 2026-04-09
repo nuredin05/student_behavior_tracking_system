@@ -14,7 +14,8 @@ import {
   ShieldCheck,
   School,
   Menu,
-  X
+  X,
+  ArrowUp
 } from 'lucide-react';
 
 const Layout = ({ children }) => {
@@ -25,11 +26,28 @@ const Layout = ({ children }) => {
   const [showNotifications, setShowNotifications] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [showScrollTop, setShowScrollTop] = useState(false);
 
   // Close mobile menu on route change
   useEffect(() => {
     setIsMobileMenuOpen(false);
   }, [location.pathname]);
+
+  // Scroll to top button visibility
+  useEffect(() => {
+    const handleScroll = (e) => {
+      const scrollableElement = e.target;
+      if (scrollableElement.classList.contains('custom-scrollbar')) {
+        setShowScrollTop(scrollableElement.scrollTop > 400);
+      }
+    };
+
+    const scrollableSection = document.querySelector('.custom-scrollbar');
+    if (scrollableSection) {
+      scrollableSection.addEventListener('scroll', handleScroll);
+      return () => scrollableSection.removeEventListener('scroll', handleScroll);
+    }
+  }, []);
 
   useEffect(() => {
     if (user) {
@@ -61,6 +79,16 @@ const Layout = ({ children }) => {
   const handleLogout = () => {
     logout();
     navigate('/login');
+  };
+
+  const scrollToTop = () => {
+    const scrollableSection = document.querySelector('.custom-scrollbar');
+    if (scrollableSection) {
+      scrollableSection.scrollTo({
+        top: 0,
+        behavior: 'smooth'
+      });
+    }
   };
 
   const navItems = [
@@ -237,6 +265,17 @@ const Layout = ({ children }) => {
           </div>
         </section>
       </main>
+
+      {/* Scroll to Top Button */}
+      {showScrollTop && (
+        <button
+          onClick={scrollToTop}
+          className="fixed bottom-8 right-8 z-50 w-12 h-12 bg-primaryClr hover:bg-primaryClrLight text-white rounded-full shadow-2xl shadow-primaryClr/30 flex items-center justify-center transition-all duration-300 hover:scale-110 active:scale-95 animate-fadeInUp"
+          aria-label="Scroll to top"
+        >
+          <ArrowUp size={20} />
+        </button>
+      )}
     </div>
   );
 };
