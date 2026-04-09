@@ -166,6 +166,8 @@ const reviewBehavior = async (req, res) => {
     }
 
     const record = records[0];
+    console.log('Reviewing record:', { id, status, record }); // Debug log
+    
     if (record.status !== 'pending' && record.status !== 'escalated') {
       await connection.rollback();
       return res.status(400).json({ error: 'Record has already been processed' });
@@ -180,11 +182,13 @@ const reviewBehavior = async (req, res) => {
 
     // 3. If approved, update student points balance
     if (status === 'approved') {
-      await connection.query(`
+      console.log('Updating student points:', { student_id: record.student_id, points: record.points_applied }); // Debug log
+      const [updateResult] = await connection.query(`
         UPDATE students 
         SET current_points = current_points + ? 
         WHERE id = ?
       `, [record.points_applied, record.student_id]);
+      console.log('Points update result:', updateResult); // Debug log
     }
 
     // 4. Notify Teacher of the decision
