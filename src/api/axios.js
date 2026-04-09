@@ -1,8 +1,8 @@
 import axios from 'axios';
 
 const api = axios.create({
-  baseURL: 'https://amana.be.yegofi.com/api',
-  // baseURL: 'http://localhost:5000/api', // (avoids CORS on file uploads)
+  // baseURL: 'https://amana.be.yegofi.com/api',
+  baseURL: 'http://localhost:5000/api', // (avoids CORS on file uploads)
   headers: {
     'Content-Type': 'application/json',
   },

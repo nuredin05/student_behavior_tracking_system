@@ -121,18 +121,23 @@ const getPendingRecords = async (req, res) => {
     const query = `
       SELECT br.*, 
              s.first_name as student_first_name, s.last_name as student_last_name, s.admission_number,
-             s.photo_url as student_photo, s.grade_level, s.section,
+             s.photo_url as student_photo, 
+             c.grade_level, c.section,
              bc.name as category_name, bc.type as category_type,
              u.first_name as teacher_first_name, u.last_name as teacher_last_name
       FROM behavior_records br
-      JOIN students s ON br.student_id = s.id
-      JOIN behavior_categories bc ON br.category_id = bc.id
-      JOIN users u ON br.recorded_by = u.id
+      LEFT JOIN students s ON br.student_id = s.id
+      LEFT JOIN classes c ON s.class_id = c.id
+      LEFT JOIN behavior_categories bc ON br.category_id = bc.id
+      LEFT JOIN users u ON br.recorded_by = u.id
       WHERE br.status = 'pending'
       ORDER BY br.created_at DESC
     `;
     const [rows] = await db.query(query);
     console.log('Pending records found:', rows.length); // Debug log
+    if (rows.length > 0) {
+      console.log('First record:', JSON.stringify(rows[0], null, 2)); // Debug first record
+    }
     res.json(rows);
   } catch (error) {
     console.error('Error fetching pending records:', error);
