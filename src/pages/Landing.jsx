@@ -22,6 +22,13 @@ import {
   ArrowUp
 } from 'lucide-react';
 
+// Import hero images
+import hero1 from '../assets/hero/hero1.jpg';
+import hero2 from '../assets/hero/hero2.jpg';
+import hero3 from '../assets/hero/hero3.jpg';
+import hero4 from '../assets/hero/hero4.jpg';
+import hero5 from '../assets/hero/hero5.jpg';
+
 const Landing = () => {
   const navigate = useNavigate();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -30,12 +37,22 @@ const Landing = () => {
   const [topStudent, setTopStudent] = useState(null);
   const [topStudents, setTopStudents] = useState([]);
   const [currentSlide, setCurrentSlide] = useState(0);
+  const [statsVisible, setStatsVisible] = useState(false);
+  const [positiveTrend, setPositiveTrend] = useState(0);
+  const [animatedStats, setAnimatedStats] = useState({
+    students: 0,
+    staff: 0,
+    logs: 0,
+    satisfaction: 0
+  });
 
   // Carousel images
   const carouselImages = [
-    '/src/assets/hero/hero1.jpg',
-    '/src/assets/hero/hero2.jpg',
-    '/src/assets/hero/hero3.jpg'
+    hero1,
+    hero2,
+    hero3,
+    hero4,
+    hero5
   ];
 
   useEffect(() => {
@@ -54,6 +71,68 @@ const Landing = () => {
     }, 5000); // Change slide every 5 seconds
     return () => clearInterval(interval);
   }, [carouselImages.length]);
+
+  // Intersection Observer for stats animation
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting && !statsVisible) {
+            setStatsVisible(true);
+          }
+        });
+      },
+      { threshold: 0.3 }
+    );
+
+    const statsSection = document.getElementById('stats-section');
+    if (statsSection) {
+      observer.observe(statsSection);
+    }
+
+    return () => {
+      if (statsSection) {
+        observer.unobserve(statsSection);
+      }
+    };
+  }, [statsVisible]);
+
+  // Animate stats counting
+  useEffect(() => {
+    if (!statsVisible) return;
+
+    const targets = {
+      students: 500,
+      staff: 50,
+      logs: 2000,
+      satisfaction: 98
+    };
+
+    const duration = 2000; // 2 seconds
+    const steps = 60;
+    const interval = duration / steps;
+
+    let currentStep = 0;
+
+    const timer = setInterval(() => {
+      currentStep++;
+      const progress = currentStep / steps;
+
+      setAnimatedStats({
+        students: Math.floor(targets.students * progress),
+        staff: Math.floor(targets.staff * progress),
+        logs: Math.floor(targets.logs * progress),
+        satisfaction: Math.floor(targets.satisfaction * progress)
+      });
+
+      if (currentStep >= steps) {
+        setAnimatedStats(targets);
+        clearInterval(timer);
+      }
+    }, interval);
+
+    return () => clearInterval(timer);
+  }, [statsVisible]);
 
   // Fetch top student
   useEffect(() => {
@@ -78,6 +157,29 @@ const Landing = () => {
       }
     };
     fetchTopStudent();
+  }, []);
+
+  // Fetch positive trend from analytics
+  useEffect(() => {
+    const fetchPositiveTrend = async () => {
+      try {
+        const response = await api.get('/behaviors/analytics');
+        const { impact } = response.data;
+        
+        // Calculate positive trend percentage
+        if (impact.total_logs > 0) {
+          const positivePercentage = Math.round((impact.total_positive / impact.total_logs) * 100);
+          setPositiveTrend(positivePercentage);
+        } else {
+          setPositiveTrend(0);
+        }
+      } catch (error) {
+        console.error('Error fetching positive trend:', error);
+        // Fallback to a default value
+        setPositiveTrend(24);
+      }
+    };
+    fetchPositiveTrend();
   }, []);
 
   const features = [
@@ -226,8 +328,8 @@ const Landing = () => {
             <div className="space-y-8 animate-fadeInUp">
               <div className="inline-block">
                 <span className="px-4 py-2 bg-primaryClr/10 border border-primaryClr/20 rounded-full text-xs font-bold uppercase tracking-widest text-primaryClr">
-                  <Zap size={12} className="inline mr-2" />
-                  Next-Gen School Management
+                  <Award size={12} className="inline mr-2" />
+                  Next-Gen School • Nationally Recognized Laboratory Center
                 </span>
               </div>
               
@@ -329,7 +431,7 @@ const Landing = () => {
                     </div>
                     <div>
                       <p className="text-xs text-secondaryClr">Positive Trend</p>
-                      <p className="text-lg font-bold text-accentClr">+24%</p>
+                      <p className="text-lg font-bold text-accentClr">+{positiveTrend}%</p>
                     </div>
                   </div>
                 </div>
@@ -431,18 +533,33 @@ const Landing = () => {
       </section>
 
       {/* Stats Section */}
-      <section className="py-16 px-4 sm:px-6 lg:px-8 bg-bgDark/40 border-y border-white/5">
+      <section id="stats-section" className="py-16 px-4 sm:px-6 lg:px-8 bg-bgDark/40 border-y border-white/5">
         <div className="max-w-7xl mx-auto">
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-8">
-            {stats.map((stat, index) => (
-              <div key={index} className="text-center animate-fadeInUp" style={{ animationDelay: `${index * 0.1}s` }}>
-                <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-primaryClr/10 text-primaryClr mb-4">
-                  <stat.icon size={28} />
+            {stats.map((stat, index) => {
+              let displayValue;
+              if (stat.label === 'Active Students') {
+                displayValue = `${animatedStats.students}+`;
+              } else if (stat.label === 'Staff Members') {
+                displayValue = `${animatedStats.staff}+`;
+              } else if (stat.label === 'Behavior Logs') {
+                displayValue = `${animatedStats.logs.toLocaleString()}+`;
+              } else if (stat.label === 'Satisfaction Rate') {
+                displayValue = `${animatedStats.satisfaction}%`;
+              } else {
+                displayValue = stat.value;
+              }
+
+              return (
+                <div key={index} className="text-center animate-fadeInUp" style={{ animationDelay: `${index * 0.1}s` }}>
+                  <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-primaryClr/10 text-primaryClr mb-4">
+                    <stat.icon size={28} />
+                  </div>
+                  <p className="text-3xl md:text-4xl font-black text-primaryClrText mb-2">{displayValue}</p>
+                  <p className="text-sm text-secondaryClr uppercase tracking-wider font-bold">{stat.label}</p>
                 </div>
-                <p className="text-3xl md:text-4xl font-black text-primaryClrText mb-2">{stat.value}</p>
-                <p className="text-sm text-secondaryClr uppercase tracking-wider font-bold">{stat.label}</p>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
       </section>
@@ -633,9 +750,13 @@ const Landing = () => {
                   <span className="text-[8px] text-secondaryClr uppercase tracking-widest font-semibold">Shaping The Future</span>
                 </div>
               </div>
-              <p className="text-sm text-secondaryClr max-w-sm">
+              <p className="text-sm text-secondaryClr max-w-sm mb-4">
                 Empowering schools with intelligent behavior management and data-driven insights.
               </p>
+              <div className="inline-flex items-center gap-2 px-3 py-2 bg-accentClr/10 border border-accentClr/20 rounded-lg">
+                <Award size={14} className="text-accentClr" />
+                <span className="text-xs font-bold text-accentClr">Nationally Recognized Laboratory Center</span>
+              </div>
             </div>
 
             <div>

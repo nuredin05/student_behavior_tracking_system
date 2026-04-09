@@ -76,9 +76,12 @@ const Layout = ({ children }) => {
     }
   };
 
-  const handleLogout = () => {
-    logout();
-    navigate('/login');
+  const handleLogout = async () => {
+    await logout();
+    // Small delay to ensure state is cleared
+    setTimeout(() => {
+      navigate('/', { replace: true });
+    }, 100);
   };
 
   const scrollToTop = () => {

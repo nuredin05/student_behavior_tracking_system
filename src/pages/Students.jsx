@@ -25,6 +25,28 @@ const Students = () => {
   const [selectedClass, setSelectedClass] = useState('all');
   const [viewMode, setViewMode] = useState('grid'); // grid | table
 
+  const API_BASE_URL = 'https://amana.be.yegofi.com';
+
+  // Helper function to get full image URL
+  const getImageUrl = (student) => {
+    if (student.photo_url) {
+      // If photo_url starts with http, use it as is
+      if (student.photo_url.startsWith('http')) {
+        return student.photo_url;
+      }
+      // Otherwise, prepend the base URL
+      return `${API_BASE_URL}${student.photo_url}`;
+    }
+    if (student.student_photo) {
+      if (student.student_photo.startsWith('http')) {
+        return student.student_photo;
+      }
+      return `${API_BASE_URL}${student.student_photo}`;
+    }
+    // Fallback to avatar generator
+    return `https://ui-avatars.com/api/?name=${student.first_name}+${student.last_name}&background=6c5dd3&color=fff`;
+  };
+
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -150,7 +172,7 @@ const Students = () => {
                 <div className="relative">
                   <div className="w-20 h-20 rounded-2xl border-2 border-white/5 overflow-hidden shadow-2xl relative z-10">
                     <img
-                      src={student.photo_url || student.student_photo || `https://ui-avatars.com/api/?name=${student.first_name}+${student.last_name}&background=6c5dd3&color=fff`}
+                      src={getImageUrl(student)}
                       alt="student"
                       className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
                     />
@@ -216,7 +238,7 @@ const Students = () => {
                       <div className="flex items-center gap-4">
                         <div className="w-10 h-10 rounded-xl border border-white/5 overflow-hidden shadow-lg">
                           <img
-                            src={student.photo_url || student.student_photo || `https://ui-avatars.com/api/?name=${student.first_name}+${student.last_name}&background=6c5dd3&color=fff`}
+                            src={getImageUrl(student)}
                             alt="student"
                             className="w-full h-full object-cover"
                           />

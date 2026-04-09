@@ -24,6 +24,28 @@ const Analytics = () => {
   const [data, setData] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
 
+  const API_BASE_URL = 'https://amana.be.yegofi.com';
+
+  // Helper function to get full image URL
+  const getImageUrl = (student) => {
+    if (student.photo_url) {
+      // If photo_url starts with http, use it as is
+      if (student.photo_url.startsWith('http')) {
+        return student.photo_url;
+      }
+      // Otherwise, prepend the base URL
+      return `${API_BASE_URL}${student.photo_url}`;
+    }
+    if (student.student_photo) {
+      if (student.student_photo.startsWith('http')) {
+        return student.student_photo;
+      }
+      return `${API_BASE_URL}${student.student_photo}`;
+    }
+    // Fallback to avatar generator
+    return `https://ui-avatars.com/api/?name=${student.first_name}+${student.last_name}&background=6c5dd3&color=fff`;
+  };
+
   useEffect(() => {
     const fetchAnalytics = async () => {
       try {
@@ -66,7 +88,7 @@ const Analytics = () => {
             {(topStudents || []).slice(0, 3).map((student, i) => (
               <div key={i} className="w-10 h-10 rounded-full border-2 border-bgDark overflow-hidden">
                 <img 
-                  src={student.photo_url || `https://ui-avatars.com/api/?name=${student.first_name}+${student.last_name}&background=6c5dd3&color=fff`} 
+                  src={getImageUrl(student)} 
                   alt={`${student.first_name} ${student.last_name}`} 
                   title={`${student.first_name} ${student.last_name}`} 
                   className="w-full h-full object-cover" 
@@ -235,7 +257,7 @@ const Analytics = () => {
               <div key={student.id} className="flex items-center gap-4 group">
                 <span className="text-lg font-black text-secondaryClr opacity-20 w-6">0{i+1}</span>
                 <div className="w-12 h-12 rounded-xl overflow-hidden border-2 border-white/5 shadow-lg flex-shrink-0">
-                  <img src={student.photo_url || `https://ui-avatars.com/api/?name=${student.first_name}+${student.last_name}&background=6c5dd3&color=fff`} className="w-full h-full object-cover" alt="p" />
+                  <img src={getImageUrl(student)} className="w-full h-full object-cover" alt="p" />
                 </div>
                 <div className="flex-1">
                   <p className="font-bold text-primaryClrText group-hover:text-primaryClr transition-colors">{student.first_name} {student.last_name}</p>
@@ -265,7 +287,7 @@ const Analytics = () => {
               <div key={student.id} className="flex items-center gap-4 group">
                 <span className="text-lg font-black text-secondaryClr opacity-20 w-6">0{i+1}</span>
                 <div className="w-12 h-12 rounded-xl overflow-hidden border-2 border-white/5 shadow-lg flex-shrink-0">
-                  <img src={student.photo_url || `https://ui-avatars.com/api/?name=${student.first_name}+${student.last_name}&background=f72121&color=fff`} className="w-full h-full object-cover" alt="p" />
+                  <img src={getImageUrl(student)} className="w-full h-full object-cover" alt="p" />
                 </div>
                 <div className="flex-1">
                   <p className="font-bold text-primaryClrText group-hover:text-dangerClr transition-colors">{student.first_name} {student.last_name}</p>

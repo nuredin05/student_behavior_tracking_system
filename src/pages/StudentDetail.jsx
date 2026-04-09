@@ -29,8 +29,30 @@ const StudentDetail = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const { user: currentUser } = useAuth();
-   const [data, setData] = useState(null);
+  const [data, setData] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
+
+  const API_BASE_URL = 'https://amana.be.yegofi.com';
+
+  // Helper function to get full image URL
+  const getImageUrl = (student) => {
+    if (student.photo_url) {
+      // If photo_url starts with http, use it as is
+      if (student.photo_url.startsWith('http')) {
+        return student.photo_url;
+      }
+      // Otherwise, prepend the base URL
+      return `${API_BASE_URL}${student.photo_url}`;
+    }
+    if (student.student_photo) {
+      if (student.student_photo.startsWith('http')) {
+        return student.student_photo;
+      }
+      return `${API_BASE_URL}${student.student_photo}`;
+    }
+    // Fallback to avatar generator
+    return `https://ui-avatars.com/api/?name=${student.first_name}+${student.last_name}&background=6c5dd3&color=fff`;
+  };
 
   // Quick Log State
   const [isLogging, setIsLogging] = useState(false);
@@ -130,18 +152,22 @@ const StudentDetail = () => {
               <Trophy size={14} /> Generate Certificate
             </button>
           )}
-          <button 
-            onClick={() => navigate(`/report/${id}`)}
-            className="btn-secondary px-4 py-2 text-xs"
-          >
-            Print Report
-          </button>
-          <button 
-            onClick={() => setIsLogging(true)}
-            className="btn-primary px-4 py-2 text-xs flex items-center gap-2"
-          >
-            <PlusCircle size={14} /> Log Behavior
-          </button>
+          {(['supervisor', 'admin', 'manager', 'teacher'].includes(currentUser?.role)) && (
+            <button 
+              onClick={() => navigate(`/report/${id}`)}
+              className="btn-secondary px-4 py-2 text-xs"
+            >
+              Print Report
+            </button>
+          )}
+          {(['supervisor', 'admin', 'manager', 'teacher'].includes(currentUser?.role)) && (
+            <button 
+              onClick={() => setIsLogging(true)}
+              className="btn-primary px-4 py-2 text-xs flex items-center gap-2"
+            >
+              <PlusCircle size={14} /> Log Behavior
+            </button>
+          )}
         </div>
       </div>
 
@@ -155,7 +181,7 @@ const StudentDetail = () => {
           <div className="relative group">
             <div className="w-32 h-32 rounded-3xl border-4 border-white/5 overflow-hidden shadow-2xl relative z-10">
               <img 
-                src={student.photo_url || `https://ui-avatars.com/api/?name=${student.first_name}+${student.last_name}&background=6c5dd3&color=fff&size=512`} 
+                src={getImageUrl(student)} 
                 alt="student" 
                 className="w-full h-full object-cover"
               />

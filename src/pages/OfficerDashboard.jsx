@@ -218,7 +218,7 @@ const OfficerDashboard = () => {
               <div className="space-y-2">
                 <label className="text-sm font-medium text-secondaryClr">Gender</label>
                 <div className="flex gap-4">
-                  {['male', 'female', 'other'].map(g => (
+                  {['male', 'female'].map(g => (
                     <button
                       key={g}
                       type="button"

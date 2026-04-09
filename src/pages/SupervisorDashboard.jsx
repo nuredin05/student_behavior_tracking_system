@@ -59,6 +59,28 @@ const ReviewQueue = () => {
   const [processingId, setProcessingId] = useState(null);
   const [status, setStatus] = useState({ type: '', message: '' });
 
+  const API_BASE_URL = 'https://amana.be.yegofi.com';
+
+  // Helper function to get full image URL
+  const getImageUrl = (record) => {
+    if (record.student_photo) {
+      // If student_photo starts with http, use it as is
+      if (record.student_photo.startsWith('http')) {
+        return record.student_photo;
+      }
+      // Otherwise, prepend the base URL
+      return `${API_BASE_URL}${record.student_photo}`;
+    }
+    if (record.photo_url) {
+      if (record.photo_url.startsWith('http')) {
+        return record.photo_url;
+      }
+      return `${API_BASE_URL}${record.photo_url}`;
+    }
+    // Fallback to avatar generator
+    return `https://ui-avatars.com/api/?name=${record.student_first_name}+${record.student_last_name}&background=6c5dd3&color=fff`;
+  };
+
   const fetchRecords = useCallback(async () => {
     setIsLoading(true);
     try {
@@ -74,17 +96,34 @@ const ReviewQueue = () => {
   useEffect(() => { fetchRecords(); }, [fetchRecords]);
 
   const handleReview = async (id, decision) => {
+    // Prevent duplicate processing
+    if (processingId) return;
+    
     setProcessingId(id);
     setStatus({ type: '', message: '' });
     try {
-      await api.patch(`/behaviors/records/${id}/review`, { status: decision });
+      console.log('Reviewing record:', { id, decision }); // Debug log
+      const response = await api.patch(`/behaviors/records/${id}/review`, { status: decision });
+      console.log('Review response:', response.data); // Debug log
       setRecords(prev => prev.filter(r => r.id !== id));
       setStatus({
         type: 'success',
         message: `Incident ${decision === 'approved' ? 'approved ✓' : 'rejected ✗'} successfully.`
       });
     } catch (err) {
-      setStatus({ type: 'error', message: err.response?.data?.error || 'Failed to review incident' });
+      console.error('Review error:', err.response?.data || err); // Debug log
+      const errorMessage = err.response?.data?.error || err.response?.data?.message || 'Failed to review incident';
+      
+      // If record was already processed, remove it from the queue
+      if (errorMessage.includes('already been processed') || errorMessage.includes('already processed')) {
+        setRecords(prev => prev.filter(r => r.id !== id));
+        setStatus({ 
+          type: 'success', 
+          message: 'Record was already processed and has been removed from queue.' 
+        });
+      } else {
+        setStatus({ type: 'error', message: errorMessage });
+      }
     } finally {
       setProcessingId(null);
     }
@@ -114,7 +153,20 @@ const ReviewQueue = () => {
       setActionDone('');
       setStatus({ type: 'success', message: 'Incident approved & action recorded successfully!' });
     } catch (err) {
-      setStatus({ type: 'error', message: 'Failed to complete review' });
+      const errorMessage = err.response?.data?.error || 'Failed to complete review';
+      
+      // If record was already processed, remove it from the queue
+      if (errorMessage.includes('already been processed') || errorMessage.includes('already processed')) {
+        setRecords(prev => prev.filter(r => r.id !== activeRecord.id));
+        setShowActionModal(false);
+        setActionDone('');
+        setStatus({ 
+          type: 'success', 
+          message: 'Record was already processed and has been removed from queue.' 
+        });
+      } else {
+        setStatus({ type: 'error', message: errorMessage });
+      }
     } finally {
       setActionSaving(false);
     }
@@ -181,7 +233,7 @@ const ReviewQueue = () => {
               <div className="flex items-center gap-4 min-w-[180px]">
                 <div className="w-14 h-14 rounded-2xl border border-white/5 overflow-hidden flex-shrink-0">
                   <img
-                    src={record.student_photo || `https://ui-avatars.com/api/?name=${record.student_first_name}+${record.student_last_name}&background=6c5dd3&color=fff`}
+                    src={getImageUrl(record)}
                     alt="student"
                     className="w-full h-full object-cover"
                   />
@@ -231,25 +283,26 @@ const ReviewQueue = () => {
                   <button
                     id={`approve-${record.id}`}
                     onClick={() => handleReview(record.id, 'approved')}
-                    disabled={processingId === record.id}
+                    disabled={processingId !== null}
                     title="Approve"
-                    className="w-11 h-11 rounded-xl bg-accentClr/15 hover:bg-accentClr text-accentClr hover:text-white flex items-center justify-center transition-all duration-200 disabled:opacity-40"
+                    className="w-11 h-11 rounded-xl bg-accentClr/15 hover:bg-accentClr text-accentClr hover:text-white flex items-center justify-center transition-all duration-200 disabled:opacity-40 disabled:cursor-not-allowed"
                   >
                     {processingId === record.id ? <Loader2 size={18} className="animate-spin" /> : <ThumbsUp size={18} />}
                   </button>
                   <button
                     onClick={() => openActionModal(record)}
+                    disabled={processingId !== null}
                     title="Approve with Action"
-                    className="w-11 h-11 rounded-xl bg-primaryClr/10 hover:bg-primaryClr text-primaryClr hover:text-white flex items-center justify-center transition-all duration-200"
+                    className="w-11 h-11 rounded-xl bg-primaryClr/10 hover:bg-primaryClr text-primaryClr hover:text-white flex items-center justify-center transition-all duration-200 disabled:opacity-40 disabled:cursor-not-allowed"
                   >
                     <ListChecks size={18} />
                   </button>
                   <button
                     id={`reject-${record.id}`}
                     onClick={() => handleReview(record.id, 'rejected')}
-                    disabled={processingId === record.id}
+                    disabled={processingId !== null}
                     title="Reject"
-                    className="w-11 h-11 rounded-xl bg-dangerClr/10 hover:bg-dangerClr text-dangerClr hover:text-white flex items-center justify-center transition-all duration-200 disabled:opacity-40"
+                    className="w-11 h-11 rounded-xl bg-dangerClr/10 hover:bg-dangerClr text-dangerClr hover:text-white flex items-center justify-center transition-all duration-200 disabled:opacity-40 disabled:cursor-not-allowed"
                   >
                     {processingId === record.id ? <Loader2 size={18} className="animate-spin" /> : <ThumbsDown size={18} />}
                   </button>

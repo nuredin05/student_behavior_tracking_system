@@ -19,6 +19,28 @@ const TeacherDashboard = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedStudent, setSelectedStudent] = useState(null);
   const [selectedCategory, setSelectedCategory] = useState(null);
+
+  const API_BASE_URL = 'https://amana.be.yegofi.com';
+
+  // Helper function to get full image URL
+  const getImageUrl = (student) => {
+    if (student.photo_url) {
+      // If photo_url starts with http, use it as is
+      if (student.photo_url.startsWith('http')) {
+        return student.photo_url;
+      }
+      // Otherwise, prepend the base URL
+      return `${API_BASE_URL}${student.photo_url}`;
+    }
+    if (student.student_photo) {
+      if (student.student_photo.startsWith('http')) {
+        return student.student_photo;
+      }
+      return `${API_BASE_URL}${student.student_photo}`;
+    }
+    // Fallback to avatar generator
+    return `https://ui-avatars.com/api/?name=${student.first_name}+${student.last_name}&background=6c5dd3&color=fff`;
+  };
   
   const [formData, setFormData] = useState({
     points_applied: 0,
@@ -203,7 +225,7 @@ const TeacherDashboard = () => {
               <div className="mt-6 p-4 bg-primaryClr/10 border border-primaryClr/20 rounded-xl flex items-center justify-between">
                 <div className="flex items-center gap-4">
                   <img 
-                    src={selectedStudent.photo_url || `https://ui-avatars.com/api/?name=${selectedStudent.first_name}+${selectedStudent.last_name}&background=6c5dd3&color=fff`} 
+                    src={getImageUrl(selectedStudent)} 
                     alt="profile" 
                     className="w-12 h-12 rounded-full object-cover border-2 border-primaryClr"
                   />
