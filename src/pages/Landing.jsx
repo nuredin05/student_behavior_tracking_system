@@ -46,6 +46,28 @@ const Landing = () => {
     satisfaction: 0
   });
 
+  const API_BASE_URL = 'https://amana.be.yegofi.com';
+
+  // Helper function to get full image URL
+  const getImageUrl = (student) => {
+    if (student.photo_url) {
+      // If photo_url starts with http, use it as is
+      if (student.photo_url.startsWith('http')) {
+        return student.photo_url;
+      }
+      // Otherwise, prepend the base URL
+      return `${API_BASE_URL}${student.photo_url}`;
+    }
+    if (student.student_photo) {
+      if (student.student_photo.startsWith('http')) {
+        return student.student_photo;
+      }
+      return `${API_BASE_URL}${student.student_photo}`;
+    }
+    // Fallback to avatar generator
+    return `https://ui-avatars.com/api/?name=${student.first_name}+${student.last_name}&background=6c5dd3&color=fff`;
+  };
+
   // Carousel images
   const carouselImages = [
     hero1,
@@ -147,13 +169,9 @@ const Landing = () => {
         }
       } catch (error) {
         console.error('Error fetching top student:', error);
-        // Set a fallback if API fails
-        setTopStudent({
-          first_name: 'Sarah',
-          last_name: 'M.',
-          current_points: 150,
-          photo_url: null
-        });
+        // Don't set fallback - just leave it empty if API fails
+        setTopStudent(null);
+        setTopStudents([]);
       }
     };
     fetchTopStudent();
@@ -396,7 +414,7 @@ const Landing = () => {
                           'border-secondaryClr ring-2 ring-secondaryClr/20'
                         } transition-transform group-hover:scale-110`}>
                           <img 
-                            src={student.photo_url || `https://ui-avatars.com/api/?name=${student.first_name}+${student.last_name}&background=${index === 0 ? '22e950' : index === 1 ? '031f54' : '2d4b83'}&color=fff`}
+                            src={getImageUrl(student)}
                             alt={`${student.first_name} ${student.last_name}`}
                             className="w-full h-full object-cover"
                           />
@@ -443,7 +461,7 @@ const Landing = () => {
                         <div className="relative">
                           <div className="w-12 h-12 rounded-xl overflow-hidden border-2 border-accentClr/30 shadow-lg">
                             <img 
-                              src={topStudent.photo_url || `https://ui-avatars.com/api/?name=${topStudent.first_name}+${topStudent.last_name}&background=22e950&color=fff`}
+                              src={getImageUrl(topStudent)}
                               alt={`${topStudent.first_name} ${topStudent.last_name}`}
                               className="w-full h-full object-cover"
                             />
