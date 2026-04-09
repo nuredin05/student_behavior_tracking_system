@@ -131,12 +131,12 @@ const ReviewQueue = () => {
   return (
     <div className="space-y-6">
       {/* Header stats strip */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h2 className="text-2xl font-display font-bold text-primaryClrText">Pending Incidents</h2>
+          <h2 className="text-xl md:text-2xl font-display font-bold text-primaryClrText">Pending Incidents</h2>
           <p className="text-secondaryClr text-sm mt-1">Review and validate behavior logs submitted by teachers.</p>
         </div>
-        <div className="flex items-center gap-3 bg-bgDark/60 border border-white/5 rounded-2xl px-5 py-3">
+        <div className="flex items-center gap-3 bg-bgDark/60 border border-white/5 rounded-2xl px-5 py-3 self-start sm:self-auto">
           <Clock size={20} className="text-primaryClr" />
           <div>
             <p className="text-xs text-secondaryClr uppercase tracking-wider">Awaiting Review</p>
@@ -175,7 +175,7 @@ const ReviewQueue = () => {
           {records.map((record) => (
             <div
               key={record.id}
-              className="glass-card p-6 grid grid-cols-1 lg:grid-cols-[auto_1fr_auto] gap-6 items-center hover:border-white/10 transition-all duration-200"
+              className="glass-card p-5 md:p-6 grid grid-cols-1 lg:grid-cols-[auto_1fr_auto] gap-4 md:gap-6 items-start lg:items-center hover:border-white/10 transition-all duration-200"
             >
               {/* Student */}
               <div className="flex items-center gap-4 min-w-[180px]">
@@ -223,8 +223,8 @@ const ReviewQueue = () => {
               </div>
 
               {/* Points + Actions */}
-              <div className="flex items-center gap-3 lg:flex-col lg:items-end">
-                <div className={`text-2xl font-bold ${record.points_applied >= 0 ? 'text-accentClr' : 'text-dangerClr'}`}>
+              <div className="flex items-center gap-3 lg:flex-col lg:items-end justify-between lg:justify-start">
+                <div className={`text-xl md:text-2xl font-bold ${record.points_applied >= 0 ? 'text-accentClr' : 'text-dangerClr'}`}>
                   {record.points_applied >= 0 ? '+' : ''}{record.points_applied} pts
                 </div>
                 <div className="flex gap-2">
@@ -335,7 +335,7 @@ const Overview = () => {
   return (
     <div className="space-y-8">
       {/* Stat Cards */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-5">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 md:gap-5">
         <StatCard icon={ListChecks} label="Total Records" value={totals.total_records} bgColor="#8C4830" />
         <StatCard icon={Clock} label="Pending Review" value={totals.pending} bgColor="#F59E0B" sub="Awaiting action" />
         <StatCard icon={CheckCircle2} label="Approved" value={totals.approved} bgColor="#22e950" />
@@ -518,12 +518,12 @@ const CategoryManagement = () => {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h2 className="text-2xl font-display font-bold text-primaryClrText">Behavior Categories</h2>
+          <h2 className="text-xl md:text-2xl font-display font-bold text-primaryClrText">Behavior Categories</h2>
           <p className="text-secondaryClr text-sm mt-1">Manage the behavior types teachers can log.</p>
         </div>
-        <button id="btn-create-category" onClick={openCreate} className="btn-primary flex items-center gap-2 px-5 py-3">
+        <button id="btn-create-category" onClick={openCreate} className="btn-primary flex items-center gap-2 px-5 py-3 self-start sm:self-auto">
           <Plus size={18} /> New Category
         </button>
       </div>
@@ -739,13 +739,14 @@ const ActionPlans = () => {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h2 className="text-2xl font-bold">Action Progress</h2>
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <h2 className="text-xl md:text-2xl font-bold">Action Progress</h2>
         <span className="text-secondaryClr text-sm">{interventions.length} Plans Active</span>
       </div>
 
       <div className="glass-card !p-0 overflow-hidden">
-        <table className="w-full text-left">
+        <div className="overflow-x-auto">
+        <table className="w-full text-left min-w-[600px]">
           <thead className="bg-bgDark">
             <tr className="border-b border-white/5">
               <th className="p-6 text-xs font-bold uppercase tracking-widest text-secondaryClr">Student</th>
@@ -791,6 +792,7 @@ const ActionPlans = () => {
             ))}
           </tbody>
         </table>
+        </div>
       </div>
     </div>
   );
@@ -812,25 +814,25 @@ const SupervisorDashboard = () => {
     <div className="space-y-8 animate-fadeInUp">
       {/* Page Header */}
       <div>
-        <h1 className="text-3xl font-display font-bold text-primaryClr mb-1">Supervisor Panel</h1>
+        <h1 className="text-2xl md:text-3xl font-display font-bold text-primaryClr mb-1">Supervisor Panel</h1>
         <p className="text-secondaryClr">Manage incidents, review behavior records, and configure categories.</p>
       </div>
 
       {/* Tab bar */}
-      <div className="flex gap-1 bg-bgDark/60 border border-white/5 rounded-2xl p-1 w-fit">
+      <div className="flex gap-1 bg-bgDark/60 border border-white/5 rounded-2xl p-1 w-full sm:w-fit overflow-x-auto scrollbar-hide">
         {TABS.map(({ id, label, icon: Icon }) => (
           <button
             key={id}
             id={`tab-${id}`}
             onClick={() => setActiveTab(id)}
-            className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 ${
+            className={`flex-shrink-0 flex items-center gap-2 px-4 sm:px-5 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 ${
               activeTab === id
                 ? 'bg-primaryClr text-white shadow-lg shadow-primaryClr/20'
                 : 'text-secondaryClr hover:text-primaryClrText hover:bg-white/5'
             }`}
           >
             <Icon size={16} />
-            {label}
+            <span className="hidden sm:inline">{label}</span>
           </button>
         ))}
       </div>

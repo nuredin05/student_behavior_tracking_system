@@ -120,12 +120,12 @@ const TeacherDashboard = () => {
 
   return (
     <div className="space-y-8 animate-fadeInUp">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-display font-bold text-primaryClr mb-2">Behavior Logger</h1>
+          <h1 className="text-2xl md:text-3xl font-display font-bold text-primaryClr mb-2">Behavior Logger</h1>
           <p className="text-secondaryClr text-lg">Record student achievements or incidents for review.</p>
         </div>
-        <div className="bg-bgDark/60 p-4 rounded-2xl flex items-center gap-4 border border-white/5 shadow-xl">
+        <div className="bg-bgDark/60 p-4 rounded-2xl flex items-center gap-4 border border-white/5 shadow-xl self-start sm:self-auto">
           <div className="w-12 h-12 rounded-xl bg-accentClr/20 flex items-center justify-center text-accentClr">
             <History size={24} />
           </div>
@@ -349,7 +349,7 @@ const TeacherDashboard = () => {
           </h3>
         </div>
         <div className="overflow-x-auto">
-          <table className="w-full text-left">
+          <table className="w-full text-left min-w-[500px]">
             <thead className="bg-bgDark">
               <tr className="border-b border-white/5">
                 <th className="p-6 text-xs font-bold uppercase tracking-widest text-secondaryClr">Student</th>

@@ -111,17 +111,17 @@ const StudentDetail = () => {
   return (
     <div className="space-y-8 animate-fadeInUp pb-20">
       {/* Back Button & Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <button 
           onClick={() => navigate('/students')}
-          className="flex items-center gap-2 text-secondaryClr hover:text-primaryClr transition-colors font-medium group"
+          className="flex items-center gap-2 text-secondaryClr hover:text-primaryClr transition-colors font-medium group self-start"
         >
           <div className="p-2 rounded-xl bg-bgDark border border-white/5 group-hover:bg-primaryClr group-hover:text-white transition-all">
             <ArrowLeft size={20} />
           </div>
           Back to Registry
         </button>
-        <div className="flex gap-3">
+        <div className="flex flex-wrap gap-2">
           {(['supervisor', 'admin', 'manager'].includes(currentUser?.role)) && (
             <button 
               onClick={() => navigate(`/certificate/${id}`)}
@@ -166,14 +166,14 @@ const StudentDetail = () => {
           </div>
 
           <div className="flex-1">
-            <div className="flex flex-col md:flex-row md:items-center gap-4 mb-4">
-              <h1 className="text-4xl font-display font-bold text-primaryClrText">{student.first_name} {student.last_name}</h1>
+            <div className="flex flex-col sm:flex-row sm:items-center gap-3 mb-4">
+              <h1 className="text-2xl md:text-4xl font-display font-bold text-primaryClrText">{student.first_name} {student.last_name}</h1>
               <span className="px-4 py-1 rounded-full bg-bgDark border border-white/5 text-primaryClr font-mono text-sm">
                 ID: {student.admission_number}
               </span>
             </div>
             
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
               <div>
                 <p className="text-[10px] text-secondaryClr uppercase tracking-widest font-bold mb-1">Grade Level</p>
                 <p className="text-lg font-bold">Grade {student.grade_level}-{student.section}</p>

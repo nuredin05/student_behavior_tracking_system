@@ -107,52 +107,52 @@ const Settings = () => {
   return (
     <div className="space-y-8 animate-fadeInUp max-w-5xl mx-auto pb-20">
       {/* Header */}
-      <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
+      <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
         <div>
-          <h1 className="text-4xl font-display font-black text-primaryClr mb-2 tracking-tighter uppercase">
+          <h1 className="text-3xl md:text-4xl font-display font-black text-primaryClr mb-2 tracking-tighter uppercase">
             Account Center
           </h1>
           <p className="text-secondaryClr font-medium">Manage your personal presence and security at Amana Model.</p>
         </div>
-        <div className="px-6 py-2 rounded-2xl bg-bgDark border border-white/5 flex items-center gap-3">
+        <div className="px-6 py-2 rounded-2xl bg-bgDark border border-white/5 flex items-center gap-3 self-start md:self-auto">
           <div className="w-2 h-2 rounded-full bg-accentClr animate-pulse"></div>
           <span className="text-[10px] uppercase font-black tracking-widest text-secondaryClr">Global System Active</span>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
+      <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 lg:gap-8">
         {/* Navigation Sidebar */}
         <div className="lg:col-span-1 space-y-4">
-          <div className="glass-card p-2 flex flex-col gap-1">
+          <div className="glass-card p-2 flex flex-row lg:flex-col gap-1 overflow-x-auto scrollbar-hide">
             <button
               onClick={() => setActiveTab('profile')}
-              className={`w-full text-left p-4 rounded-2xl font-bold flex items-center justify-between transition-all group ${activeTab === 'profile' ? 'bg-primaryClr text-white shadow-xl translate-x-1' : 'text-secondaryClr hover:bg-white/5 hover:text-primaryClr'
+              className={`flex-shrink-0 lg:w-full text-left p-3 lg:p-4 rounded-2xl font-bold flex items-center justify-between transition-all group ${activeTab === 'profile' ? 'bg-primaryClr text-white shadow-xl lg:translate-x-1' : 'text-secondaryClr hover:bg-white/5 hover:text-primaryClr'
                 }`}
             >
-              <div className="flex items-center gap-3">
-                <User size={18} /> Profile
+              <div className="flex items-center gap-2 lg:gap-3">
+                <User size={18} /> <span className="hidden sm:inline">Profile</span>
               </div>
-              <ChevronRight size={14} className={activeTab === 'profile' ? 'opacity-100' : 'opacity-0 group-hover:opacity-40'} />
+              <ChevronRight size={14} className={`hidden lg:block ${activeTab === 'profile' ? 'opacity-100' : 'opacity-0 group-hover:opacity-40'}`} />
             </button>
             <button
               onClick={() => setActiveTab('notifications')}
-              className={`w-full text-left p-4 rounded-2xl font-bold flex items-center justify-between transition-all group ${activeTab === 'notifications' ? 'bg-primaryClr text-white shadow-xl translate-x-1' : 'text-secondaryClr hover:bg-white/5 hover:text-primaryClr'
+              className={`flex-shrink-0 lg:w-full text-left p-3 lg:p-4 rounded-2xl font-bold flex items-center justify-between transition-all group ${activeTab === 'notifications' ? 'bg-primaryClr text-white shadow-xl lg:translate-x-1' : 'text-secondaryClr hover:bg-white/5 hover:text-primaryClr'
                 }`}
             >
-              <div className="flex items-center gap-3">
-                <Bell size={18} /> Notifications
+              <div className="flex items-center gap-2 lg:gap-3">
+                <Bell size={18} /> <span className="hidden sm:inline">Notifications</span>
               </div>
-              <ChevronRight size={14} className={activeTab === 'notifications' ? 'opacity-100' : 'opacity-0 group-hover:opacity-40'} />
+              <ChevronRight size={14} className={`hidden lg:block ${activeTab === 'notifications' ? 'opacity-100' : 'opacity-0 group-hover:opacity-40'}`} />
             </button>
             <button
               onClick={() => setActiveTab('security')}
-              className={`w-full text-left p-4 rounded-2xl font-bold flex items-center justify-between transition-all group ${activeTab === 'security' ? 'bg-primaryClr text-white shadow-xl translate-x-1' : 'text-secondaryClr hover:bg-white/5 hover:text-primaryClr'
+              className={`flex-shrink-0 lg:w-full text-left p-3 lg:p-4 rounded-2xl font-bold flex items-center justify-between transition-all group ${activeTab === 'security' ? 'bg-primaryClr text-white shadow-xl lg:translate-x-1' : 'text-secondaryClr hover:bg-white/5 hover:text-primaryClr'
                 }`}
             >
-              <div className="flex items-center gap-3">
-                <Shield size={18} /> Security
+              <div className="flex items-center gap-2 lg:gap-3">
+                <Shield size={18} /> <span className="hidden sm:inline">Security</span>
               </div>
-              <ChevronRight size={14} className={activeTab === 'security' ? 'opacity-100' : 'opacity-0 group-hover:opacity-40'} />
+              <ChevronRight size={14} className={`hidden lg:block ${activeTab === 'security' ? 'opacity-100' : 'opacity-0 group-hover:opacity-40'}`} />
             </button>
           </div>
 

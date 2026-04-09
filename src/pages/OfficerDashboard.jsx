@@ -125,12 +125,12 @@ const OfficerDashboard = () => {
 
   return (
     <div className="space-y-8 animate-fadeInUp">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-display font-bold text-primaryClr mb-2">Student Enrollment</h1>
+          <h1 className="text-2xl md:text-3xl font-display font-bold text-primaryClr mb-2">Student Enrollment</h1>
           <p className="text-secondaryClr">Register new students with mandatory identity photos.</p>
         </div>
-        <div className="bg-bgDark/60 p-4 rounded-2xl flex items-center gap-4 border border-white/5 shadow-xl">
+        <div className="bg-bgDark/60 p-4 rounded-2xl flex items-center gap-4 border border-white/5 shadow-xl self-start sm:self-auto">
           <div className="w-12 h-12 rounded-xl bg-primaryClrLight/20 flex items-center justify-center text-primaryClr">
             <Users size={24} />
           </div>
@@ -142,7 +142,7 @@ const OfficerDashboard = () => {
       </div>
 
       {/* Tabs */}
-      <div className="flex gap-1 bg-bgDark/60 border border-white/5 rounded-2xl p-1 w-fit">
+      <div className="flex gap-1 bg-bgDark/60 border border-white/5 rounded-2xl p-1 w-full sm:w-fit overflow-x-auto scrollbar-hide">
         <button 
           onClick={() => setActiveTab('single')}
           className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-medium transition-all ${activeTab === 'single' ? 'bg-primaryClr text-white shadow-lg' : 'text-secondaryClr hover:text-white'}`}
@@ -282,14 +282,14 @@ const OfficerDashboard = () => {
             </div>
           ) : (
             <div className="glass-card">
-              <div className="flex items-center justify-between mb-8">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
                 <div>
                   <h3 className="text-xl font-bold text-primaryClrText mb-1">Bulk Import Students</h3>
                   <p className="text-sm text-secondaryClr">Upload an Excel (.xlsx) file to register multiple students at once.</p>
                 </div>
                 <button 
                   onClick={downloadTemplate}
-                  className="px-4 py-2 bg-white/5 hover:bg-white/10 rounded-xl text-sm font-medium border border-white/10 flex items-center gap-2 transition-colors"
+                  className="px-4 py-2 bg-white/5 hover:bg-white/10 rounded-xl text-sm font-medium border border-white/10 flex items-center gap-2 transition-colors self-start sm:self-auto"
                 >
                   <DownloadCloud size={16} />
                   Download Template

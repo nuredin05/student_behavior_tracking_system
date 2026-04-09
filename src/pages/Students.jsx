@@ -199,7 +199,7 @@ const Students = () => {
       ) : (
         <div className="glass-card !p-0 overflow-hidden">
           <div className="overflow-x-auto">
-            <table className="w-full text-left border-collapse">
+            <table className="w-full text-left border-collapse min-w-[560px]">
               <thead>
                 <tr className="bg-bgDark border-b border-white/5">
                   <th className="px-6 py-4 text-xs font-bold text-secondaryClr uppercase tracking-widest">Student</th>

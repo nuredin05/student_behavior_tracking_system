@@ -169,7 +169,7 @@ const Layout = ({ children }) => {
               </button>
 
               {showNotifications && (
-                <div className="absolute top-full right-0 mt-4 w-96 bg-bgDark border border-white/10 rounded-2xl shadow-2xl overflow-hidden animate-fadeInUp">
+                <div className="absolute top-full right-0 mt-4 w-[calc(100vw-2rem)] sm:w-96 max-w-sm sm:max-w-none bg-bgDark border border-white/10 rounded-2xl shadow-2xl overflow-hidden animate-fadeInUp">
                   <div className="p-4 border-b border-white/5 flex items-center justify-between bg-bgDarkAll/50">
                     <h4 className="font-bold">Notifications</h4>
                     <span className="text-[10px] bg-primaryClr/20 text-primaryClr px-2 py-0.5 rounded uppercase tracking-widest font-black">Latest</span>
@@ -231,7 +231,7 @@ const Layout = ({ children }) => {
         </header>
 
         {/* Page Content */}
-        <section className="flex-1 overflow-y-auto p-8 custom-scrollbar">
+        <section className="flex-1 overflow-y-auto p-4 md:p-6 lg:p-8 custom-scrollbar">
           <div className="max-w-7xl mx-auto">
             {children}
           </div>

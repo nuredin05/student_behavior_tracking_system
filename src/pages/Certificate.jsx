@@ -41,7 +41,7 @@ const Certificate = () => {
   return (
     <div className="min-h-screen bg-bgDarkAll p-4 md:p-10 flex flex-col items-center">
       {/* Action Bar (Hidden on print) */}
-      <div className="w-full max-w-4xl flex justify-between items-center mb-8 print:hidden">
+      <div className="w-full max-w-4xl flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8 print:hidden">
         <button 
           onClick={() => navigate(-1)}
           className="flex items-center gap-2 text-secondaryClr hover:text-white transition-colors uppercase tracking-[0.2em] text-[10px] font-black"

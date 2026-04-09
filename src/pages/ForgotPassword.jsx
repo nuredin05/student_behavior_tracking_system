@@ -36,7 +36,7 @@ const ForgotPassword = () => {
         <div className="absolute top-0 right-0 w-96 h-96 bg-primaryClr rounded-full blur-[150px]"></div>
       </div>
 
-      <div className="w-full max-md relative z-10 animate-scaleIn">
+      <div className="w-full max-w-md relative z-10 animate-scaleIn">
         <div className="glass-card !p-10 border-t border-white/10 shadow-2xl">
           <Link to="/login" className="inline-flex items-center gap-2 text-secondaryClr hover:text-white transition-colors text-xs font-black uppercase tracking-widest mb-8">
             <ArrowLeft size={16} /> Back to Login

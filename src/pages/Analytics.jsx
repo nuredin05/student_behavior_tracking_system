@@ -55,13 +55,13 @@ const Analytics = () => {
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
         <div>
-          <h1 className="text-3xl font-display font-bold text-primaryClr mb-2 text-shadow-sm uppercase tracking-wider">School Performance Analytics</h1>
+          <h1 className="text-2xl md:text-3xl font-display font-bold text-primaryClr mb-2 text-shadow-sm uppercase tracking-wider">School Performance Analytics</h1>
           <p className="text-secondaryClr flex items-center gap-2">
             <Calendar size={16} /> Data snapshot for the last 30 days
           </p>
         </div>
         
-        <div className="flex items-center gap-4 bg-bgDark/60 p-5 rounded-3xl border border-white/5 shadow-2xl backdrop-blur-xl">
+        <div className="flex items-center gap-4 bg-bgDark/60 p-5 rounded-3xl border border-white/5 shadow-2xl backdrop-blur-xl self-start md:self-auto">
           <div className="flex -space-x-3">
             {(topStudents || []).slice(0, 3).map((student, i) => (
               <div key={i} className="w-10 h-10 rounded-full border-2 border-bgDark overflow-hidden">
@@ -82,7 +82,7 @@ const Analytics = () => {
       </div>
 
       {/* Impact Overview Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
         <div className="glass-card p-6 border-b-4 border-accentClr flex items-center gap-6">
           <div className="w-16 h-16 rounded-2xl bg-accentClr/10 text-accentClr flex items-center justify-center shadow-inner">
             <TrendingUp size={32} />
@@ -128,7 +128,7 @@ const Analytics = () => {
       {/* Charts Section */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         {/* Activity Trend */}
-        <div className="glass-card p-8 min-h-[450px] flex flex-col">
+        <div className="glass-card p-6 md:p-8 min-h-[350px] md:min-h-[450px] flex flex-col">
           <div className="flex items-center justify-between mb-8">
             <h3 className="text-xl font-bold flex items-center gap-3">
               <BarChart3 className="text-primaryClr" /> Behavioral Trend
@@ -306,7 +306,7 @@ const Analytics = () => {
             </BarChart>
           </ResponsiveContainer>
         </div>
-        <div className="mt-8 flex justify-center gap-12 border-t border-white/5 pt-8">
+        <div className="mt-8 flex flex-wrap justify-center gap-8 md:gap-12 border-t border-white/5 pt-8">
           <div className="text-center">
             <p className="text-3xl font-black text-accentClr">{Math.max(...gradeStats.map(g => g.avg_points || 0)).toFixed(1)}</p>
             <p className="text-[10px] text-secondaryClr uppercase font-bold tracking-widest">Highest Scoring Grade</p>
