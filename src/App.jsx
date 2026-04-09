@@ -4,6 +4,7 @@ import { AuthProvider, useAuth } from './context/AuthContext';
 import './App.css';
 
 // Pages
+import Landing from './pages/Landing';
 import Login from './pages/Login';
 import OfficerDashboard from './pages/OfficerDashboard';
 import TeacherDashboard from './pages/TeacherDashboard';
@@ -47,6 +48,7 @@ function App() {
     <AuthProvider>
       <Router>
         <Routes>
+          <Route path="/" element={<Landing />} />
           <Route path="/login" element={<Login />} />
           <Route path="/forgot-password" element={<ForgotPassword />} />
           <Route path="/reset-password" element={<ResetPassword />} />
@@ -150,7 +152,7 @@ function App() {
             } 
           />
           
-          <Route path="/" element={<Navigate to="/dashboard" />} />
+          <Route path="/dashboard" element={<Navigate to="/dashboard" />} />
           <Route path="/unauthorized" element={<div className="p-8 text-dangerClr text-2xl font-bold bg-bgDarkAll h-screen">Access Denied</div>} />
           <Route path="*" element={<div className="p-8 text-2xl font-bold bg-bgDarkAll h-screen">404 - Not Found</div>} />
         </Routes>
