@@ -12,6 +12,7 @@ const interventionRoutes = require('./routes/interventionRoutes');
 const schoolRoutes = require('./routes/schoolRoutes');
 const notificationRoutes = require('./routes/notificationRoutes');
 const assignmentRoutes = require('./routes/assignmentRoutes');
+const rewardRoutes = require('./routes/rewardRoutes');
 
 const app = express();
 
@@ -75,6 +76,7 @@ app.use('/api/interventions', interventionRoutes);
 app.use('/api/school', schoolRoutes);
 app.use('/api/notifications', notificationRoutes);
 app.use('/api/assignments', assignmentRoutes);
+app.use('/api/rewards', rewardRoutes);
 
 
 const PORT = process.env.PORT || 5000;

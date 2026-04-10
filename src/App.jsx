@@ -19,6 +19,7 @@ import ForgotPassword from './pages/ForgotPassword';
 import ResetPassword from './pages/ResetPassword';
 import Certificate from './pages/Certificate';
 import StudentReport from './pages/StudentReport';
+import Rewards from './pages/Rewards';
 import Layout from './components/Layout';
 
 const Dashboard = () => {
@@ -148,6 +149,14 @@ function App() {
             element={
               <ProtectedRoute allowedRoles={['supervisor', 'admin', 'manager', 'teacher']}>
                 <StudentReport />
+              </ProtectedRoute>
+            } 
+          />
+          <Route 
+            path="/rewards" 
+            element={
+              <ProtectedRoute allowedRoles={['manager', 'admin', 'supervisor']}>
+                <Rewards />
               </ProtectedRoute>
             } 
           />

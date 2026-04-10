@@ -20,7 +20,8 @@ import {
   Frown,
   Camera,
   CheckCircle,
-  AlertCircle
+  AlertCircle,
+  Award
 } from 'lucide-react';
 
 import { useAuth } from '../context/AuthContext';
@@ -67,18 +68,25 @@ const StudentDetail = () => {
   const [preview, setPreview] = useState(null);
   const [logStatus, setLogStatus] = useState({ type: '', message: '' });
   const [isSaving, setIsSaving] = useState(false);
+  
+  // Rewards State
+  const [isRedeeming, setIsRedeeming] = useState(false);
+  const [rewards, setRewards] = useState([]);
+  const [redemptionStatus, setRedemptionStatus] = useState({ type: '', message: '' });
 
   useEffect(() => {
     const fetchProfile = async () => {
       console.log('Frontend fetching profile for student ID:', id);
       try {
         const apiUrl = `/students/${id}/full-profile`;
-        const [profileRes, catRes] = await Promise.all([
+        const [profileRes, catRes, rewardRes] = await Promise.all([
           api.get(apiUrl),
-          api.get('/behaviors/categories')
+          api.get('/behaviors/categories'),
+          api.get('/rewards')
         ]);
         setData(profileRes.data);
         setCategories(catRes.data);
+        setRewards(rewardRes.data);
       } catch (error) {
         console.error('Error fetching student profile:', error);
       } finally {
@@ -115,6 +123,21 @@ const StudentDetail = () => {
       setLogStatus({ type: 'error', message: 'Failed to log behavior' });
     } finally {
       setIsSaving(false);
+    }
+  };
+  
+  const handleRedeem = async (rewardId) => {
+    setRedemptionStatus({ type: '', message: '' });
+    try {
+      await api.post('/rewards/redeem', { reward_id: rewardId, student_id: id });
+      setRedemptionStatus({ type: 'success', message: 'Award request sent!' });
+      window.dispatchEvent(new CustomEvent('system-update'));
+      // Re-fetch profile to update points
+      const profileRes = await api.get(`/students/${id}/full-profile`);
+      setData(profileRes.data);
+      setTimeout(() => setIsRedeeming(false), 2000);
+    } catch (err) {
+      setRedemptionStatus({ type: 'error', message: err.response?.data?.error || 'Failed to grant award' });
     }
   };
 
@@ -166,6 +189,14 @@ const StudentDetail = () => {
               className="btn-primary px-4 py-2 text-xs flex items-center gap-2"
             >
               <PlusCircle size={14} /> Log Behavior
+            </button>
+          )}
+          {(['supervisor', 'admin', 'manager'].includes(currentUser?.role)) && (
+            <button 
+              onClick={() => setIsRedeeming(true)}
+              className="bg-accentClr hover:bg-accentClr/90 text-white px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2"
+            >
+              <Award size={14} /> Award Student
             </button>
           )}
         </div>
@@ -491,6 +522,62 @@ const StudentDetail = () => {
                 Confirm Log Entry
               </button>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Redemption Modal */}
+      {isRedeeming && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-2 sm:p-4 bg-black/60 backdrop-blur-md">
+          <div className="absolute inset-0" onClick={() => setIsRedeeming(false)}></div>
+          <div className="glass-card !p-0 w-full max-w-xl relative z-60 animate-scaleIn border-t-4 border-accentClr">
+            <div className="p-4 sm:p-6 border-b border-white/5 flex items-center justify-between">
+              <h3 className="text-lg sm:text-xl font-bold">Award Student: <span className="text-accentClr">{student.first_name}</span></h3>
+              <button onClick={() => setIsRedeeming(false)} className="text-secondaryClr hover:text-white transition-colors"><X size={20} /></button>
+            </div>
+            
+            <div className="p-4 sm:p-8 space-y-4 sm:space-y-6">
+              <div className="flex items-center justify-between p-3 sm:p-4 bg-accentClr/5 rounded-2xl border border-accentClr/10">
+                <span className="text-[10px] sm:text-sm font-bold text-secondaryClr uppercase tracking-widest">Balance:</span>
+                <span className="text-xl sm:text-2xl font-black text-accentClr">{student.current_points} PTS</span>
+              </div>
+
+              <div className="space-y-3 max-h-[50vh] sm:max-h-[400px] overflow-y-auto custom-scrollbar scrollbar-hide pr-1">
+                {rewards.filter(r => r.is_active).map(reward => {
+                  const canAfford = student.current_points >= reward.point_cost;
+                  return (
+                    <button
+                      key={reward.id}
+                      disabled={!canAfford}
+                      onClick={() => handleRedeem(reward.id)}
+                      className={`w-full p-3 sm:p-4 rounded-2xl border text-left transition-all flex flex-col gap-1 sm:gap-2 ${
+                        canAfford 
+                        ? 'bg-bgDark border-white/5 hover:border-accentClr/50 group active:scale-[0.98]' 
+                        : 'bg-white/5 border-white/5 opacity-50 cursor-not-allowed'
+                      }`}
+                    >
+                      <div className="flex items-center justify-between">
+                        <span className="font-bold text-xs sm:text-sm text-white group-hover:text-accentClr transition-colors line-clamp-1">{reward.name}</span>
+                        <span className="text-[10px] sm:text-xs font-black text-accentClr whitespace-nowrap">{reward.point_cost} PTS</span>
+                      </div>
+                      <p className="text-[10px] text-secondaryClr line-clamp-2 leading-relaxed">{reward.description || 'No description'}</p>
+                    </button>
+                  );
+                })}
+                {rewards.length === 0 && (
+                  <p className="text-center py-8 text-secondaryClr opacity-50 italic text-sm">No rewards defined in the system.</p>
+                )}
+              </div>
+
+              {redemptionStatus.message && (
+                <div className={`p-4 rounded-xl flex items-center gap-3 text-xs sm:text-sm animate-fadeInUp ${
+                  redemptionStatus.type === 'success' ? 'bg-accentClr/10 text-accentClr border border-accentClr/20' : 'bg-dangerClr/10 text-dangerClr border border-dangerClr/20'
+                }`}>
+                  {redemptionStatus.type === 'success' ? <CheckCircle size={18} /> : <AlertCircle size={18} />}
+                  {redemptionStatus.message}
+                </div>
+              )}
+            </div>
           </div>
         </div>
       )}

@@ -178,7 +178,7 @@ router.get('/records/pending', authenticate, authorize('supervisor', 'admin'), b
  *       200:
  *         description: Stats for supervisor overview
  */
-router.get('/stats', authenticate, authorize('supervisor', 'admin'), behaviorController.getSupervisorStats);
+router.get('/stats', authenticate, authorize('supervisor', 'admin', 'manager'), behaviorController.getSupervisorStats);
 
 /**
  * @swagger
@@ -204,7 +204,7 @@ router.get('/public-analytics', behaviorController.getPublicAnalytics);
  *       200:
  *         description: Analytical data for charts and leaderboards
  */
-router.get('/analytics', authenticate, authorize('supervisor', 'admin'), behaviorController.getAnalyticsSummary);
+router.get('/analytics', authenticate, authorize('supervisor', 'admin', 'manager'), behaviorController.getAnalyticsSummary);
 
 /**
  * @swagger
@@ -300,6 +300,6 @@ router.patch('/records/:id/review', authenticate, authorize('supervisor', 'admin
  *       200:
  *         description: Student certificate data
  */
-router.get('/certificate/:studentId', authenticate, authorize('supervisor', 'admin'), behaviorController.getCertificateData);
+router.get('/certificate/:studentId', authenticate, authorize('supervisor', 'admin', 'manager'), behaviorController.getCertificateData);
 
 module.exports = router;
