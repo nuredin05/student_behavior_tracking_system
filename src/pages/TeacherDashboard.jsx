@@ -13,6 +13,11 @@ import {
   History
 } from 'lucide-react';
 
+// Global utility for immediate state synchronization
+const triggerSystemUpdate = () => {
+  window.dispatchEvent(new CustomEvent('system-update'));
+};
+
 const TeacherDashboard = () => {
   const [students, setStudents] = useState([]);
   const [categories, setCategories] = useState([]);
@@ -133,6 +138,7 @@ const TeacherDashboard = () => {
       const historyRes = await api.get('/behaviors/records/history');
       setMyHistory(historyRes.data.history);
       setTodayCount(historyRes.data.todayCount);
+      triggerSystemUpdate();
     } catch (error) {
       setStatus({ type: 'error', message: error.response?.data?.error || 'Failed to log behavior' });
     } finally {

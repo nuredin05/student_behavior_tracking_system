@@ -1,13 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../api/axios';
-import { 
-  ArrowRight, 
-  Shield, 
-  Users, 
-  BarChart3, 
-  Award, 
-  CheckCircle, 
+import {
+  ArrowRight,
+  Shield,
+  Users,
+  BarChart3,
+  Award,
+  CheckCircle,
   Star,
   TrendingUp,
   Clock,
@@ -43,29 +43,31 @@ const Landing = () => {
     students: 0,
     staff: 0,
     logs: 0,
-    satisfaction: 0
+    satisfaction: 0,
+    students_target: 500,
+    staff_target: 50,
+    logs_target: 2000
   });
 
   const API_BASE_URL = 'https://amana.be.yegofi.com';
 
   // Helper function to get full image URL
   const getImageUrl = (student) => {
-    if (student.photo_url) {
-      // If photo_url starts with http, use it as is
-      if (student.photo_url.startsWith('http')) {
-        return student.photo_url;
+    if (!student) return `https://ui-avatars.com/api/?background=6c5dd3&color=fff`;
+
+    const photo = student.photo_url || student.student_photo;
+
+    if (photo) {
+      // If photo starts with http, use it as is
+      if (photo.startsWith('http')) {
+        return photo;
       }
-      // Otherwise, prepend the base URL
-      return `${API_BASE_URL}${student.photo_url}`;
+      // Otherwise, use relative path (Vite proxy will handle /uploads)
+      return photo;
     }
-    if (student.student_photo) {
-      if (student.student_photo.startsWith('http')) {
-        return student.student_photo;
-      }
-      return `${API_BASE_URL}${student.student_photo}`;
-    }
+
     // Fallback to avatar generator
-    return `https://ui-avatars.com/api/?name=${student.first_name}+${student.last_name}&background=6c5dd3&color=fff`;
+    return `https://ui-avatars.com/api/?name=${student.first_name || 'Student'}+${student.last_name || ''}&background=6c5dd3&color=fff`;
   };
 
   // Carousel images
@@ -124,9 +126,9 @@ const Landing = () => {
     if (!statsVisible) return;
 
     const targets = {
-      students: 500,
-      staff: 50,
-      logs: 2000,
+      students: animatedStats.students_target || 500,
+      staff: animatedStats.staff_target || 50,
+      logs: animatedStats.logs_target || 2000,
       satisfaction: 98
     };
 
@@ -160,16 +162,14 @@ const Landing = () => {
   useEffect(() => {
     const fetchTopStudent = async () => {
       try {
-        const response = await api.get('/students');
-        // Sort by current_points descending and get the top student
-        const sortedStudents = response.data.sort((a, b) => b.current_points - a.current_points);
-        if (sortedStudents.length > 0) {
-          setTopStudent(sortedStudents[0]);
-          setTopStudents(sortedStudents.slice(0, 3)); // Get top 3
+        const response = await api.get('/students/top?limit=10');
+        const students = response.data;
+        if (students.length > 0) {
+          setTopStudent(students[0]);
+          setTopStudents(students.slice(0, 3)); // Get top 3 for the showcase
         }
       } catch (error) {
         console.error('Error fetching top student:', error);
-        // Don't set fallback - just leave it empty if API fails
         setTopStudent(null);
         setTopStudents([]);
       }
@@ -181,15 +181,25 @@ const Landing = () => {
   useEffect(() => {
     const fetchPositiveTrend = async () => {
       try {
-        const response = await api.get('/behaviors/analytics');
-        const { impact } = response.data;
-        
+        const response = await api.get('/behaviors/public-analytics');
+        const { impact, counts } = response.data;
+
         // Calculate positive trend percentage
         if (impact.total_logs > 0) {
           const positivePercentage = Math.round((impact.total_positive / impact.total_logs) * 100);
           setPositiveTrend(positivePercentage);
         } else {
           setPositiveTrend(0);
+        }
+
+        // Update stats targets with real data
+        if (counts) {
+          setAnimatedStats(prev => ({
+            ...prev,
+            students_target: counts.student_count || 500,
+            staff_target: counts.staff_count || 50,
+            logs_target: impact.total_logs || 2000
+          }));
         }
       } catch (error) {
         console.error('Error fetching positive trend:', error);
@@ -296,7 +306,7 @@ const Landing = () => {
               <a href="#features" className="text-sm font-medium text-secondaryClr hover:text-primaryClr transition-colors">Features</a>
               <a href="#about" className="text-sm font-medium text-secondaryClr hover:text-primaryClr transition-colors">About</a>
               <a href="#testimonials" className="text-sm font-medium text-secondaryClr hover:text-primaryClr transition-colors">Testimonials</a>
-              <button 
+              <button
                 onClick={() => navigate('/login')}
                 className="btn-primary px-6 py-2 flex items-center gap-2"
               >
@@ -305,7 +315,7 @@ const Landing = () => {
             </div>
 
             {/* Mobile Menu Button */}
-            <button 
+            <button
               className="md:hidden p-2 text-secondaryClr hover:text-primaryClr"
               onClick={() => setIsMenuOpen(!isMenuOpen)}
             >
@@ -321,7 +331,7 @@ const Landing = () => {
               <a href="#features" className="block text-sm font-medium text-secondaryClr hover:text-primaryClr transition-colors py-2">Features</a>
               <a href="#about" className="block text-sm font-medium text-secondaryClr hover:text-primaryClr transition-colors py-2">About</a>
               <a href="#testimonials" className="block text-sm font-medium text-secondaryClr hover:text-primaryClr transition-colors py-2">Testimonials</a>
-              <button 
+              <button
                 onClick={() => navigate('/login')}
                 className="btn-primary w-full px-6 py-3 flex items-center justify-center gap-2"
               >
@@ -350,26 +360,26 @@ const Landing = () => {
                   Next-Gen School • Nationally Recognized Laboratory Center
                 </span>
               </div>
-              
+
               <h1 className="text-4xl sm:text-5xl lg:text-6xl font-display font-black text-primaryClrText leading-tight">
                 Transform Student
                 <span className="block text-primaryClr mt-2">Behavior Management</span>
               </h1>
-              
+
               <p className="text-lg text-secondaryClr leading-relaxed max-w-xl">
-                Empower your school with intelligent behavior tracking, real-time analytics, and automated reporting. 
+                Empower your school with intelligent behavior tracking, real-time analytics, and automated reporting.
                 Built for educators, trusted by institutions.
               </p>
 
               <div className="flex flex-col sm:flex-row gap-4">
-                <button 
+                <button
                   onClick={() => navigate('/login')}
                   className="btn-primary px-8 py-4 text-lg flex items-center justify-center gap-3 group shadow-2xl shadow-primaryClr/30"
                 >
                   Get Started
                   <ArrowRight size={20} className="group-hover:translate-x-1 transition-transform" />
                 </button>
-                <button 
+                <button
                   onClick={() => document.getElementById('features').scrollIntoView({ behavior: 'smooth' })}
                   className="px-8 py-4 text-lg border-2 border-white/10 rounded-xl hover:bg-white/5 transition-all font-bold flex items-center justify-center gap-3"
                 >
@@ -403,17 +413,16 @@ const Landing = () => {
                   </p>
                   <div className="flex items-center gap-4">
                     {topStudents.map((student, index) => (
-                      <div 
+                      <div
                         key={student.id || index}
                         className="relative group cursor-pointer"
                         title={`${student.first_name} ${student.last_name} - ${student.current_points} pts`}
                       >
-                        <div className={`w-14 h-14 rounded-full overflow-hidden border-3 ${
-                          index === 0 ? 'border-accentClr ring-4 ring-accentClr/20' : 
-                          index === 1 ? 'border-primaryClr ring-2 ring-primaryClr/20' : 
-                          'border-secondaryClr ring-2 ring-secondaryClr/20'
-                        } transition-transform group-hover:scale-110`}>
-                          <img 
+                        <div className={`w-14 h-14 rounded-full overflow-hidden border-3 ${index === 0 ? 'border-accentClr ring-4 ring-accentClr/20' :
+                            index === 1 ? 'border-primaryClr ring-2 ring-primaryClr/20' :
+                              'border-secondaryClr ring-2 ring-secondaryClr/20'
+                          } transition-transform group-hover:scale-110`}>
+                          <img
                             src={getImageUrl(student)}
                             alt={`${student.first_name} ${student.last_name}`}
                             className="w-full h-full object-cover"
@@ -460,7 +469,7 @@ const Landing = () => {
                       <>
                         <div className="relative">
                           <div className="w-12 h-12 rounded-xl overflow-hidden border-2 border-accentClr/30 shadow-lg">
-                            <img 
+                            <img
                               src={getImageUrl(topStudent)}
                               alt={`${topStudent.first_name} ${topStudent.last_name}`}
                               className="w-full h-full object-cover"
@@ -497,9 +506,8 @@ const Landing = () => {
                     {carouselImages.map((image, index) => (
                       <div
                         key={index}
-                        className={`absolute inset-0 transition-opacity duration-1000 ${
-                          index === currentSlide ? 'opacity-100' : 'opacity-0'
-                        }`}
+                        className={`absolute inset-0 transition-opacity duration-1000 ${index === currentSlide ? 'opacity-100' : 'opacity-0'
+                          }`}
                       >
                         <img
                           src={image}
@@ -518,11 +526,10 @@ const Landing = () => {
                       <button
                         key={index}
                         onClick={() => setCurrentSlide(index)}
-                        className={`w-2 h-2 rounded-full transition-all duration-300 ${
-                          index === currentSlide
+                        className={`w-2 h-2 rounded-full transition-all duration-300 ${index === currentSlide
                             ? 'bg-primaryClr w-8'
                             : 'bg-white/30 hover:bg-white/50'
-                        }`}
+                          }`}
                         aria-label={`Go to slide ${index + 1}`}
                       />
                     ))}
@@ -599,7 +606,7 @@ const Landing = () => {
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             {features.map((feature, index) => (
-              <div 
+              <div
                 key={index}
                 className="glass-card group hover:border-primaryClr/30 transition-all duration-300 cursor-pointer animate-fadeInUp"
                 style={{ animationDelay: `${index * 0.1}s` }}
@@ -627,7 +634,7 @@ const Landing = () => {
                 Built for Modern Education
               </h2>
               <p className="text-lg text-secondaryClr leading-relaxed mb-6">
-                Amana Model Secondary School's Behavior Tracking System is designed to foster positive student development 
+                Amana Model Secondary School's Behavior Tracking System is designed to foster positive student development
                 through data-driven insights and transparent communication.
               </p>
               <ul className="space-y-4">
@@ -658,7 +665,7 @@ const Landing = () => {
                       <p className="text-xs text-secondaryClr">Enterprise-grade security</p>
                     </div>
                   </div>
-                  
+
                   <div className="flex items-center gap-4 p-4 bg-bgDarkAll/50 rounded-xl">
                     <div className="w-12 h-12 rounded-full bg-accentClr/20 flex items-center justify-center text-accentClr">
                       <Users size={24} />
@@ -668,7 +675,7 @@ const Landing = () => {
                       <p className="text-xs text-secondaryClr">Tailored for every user</p>
                     </div>
                   </div>
-                  
+
                   <div className="flex items-center gap-4 p-4 bg-bgDarkAll/50 rounded-xl">
                     <div className="w-12 h-12 rounded-full bg-secondaryClr/20 flex items-center justify-center text-secondaryClr">
                       <BarChart3 size={24} />
@@ -702,14 +709,14 @@ const Landing = () => {
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             {testimonials.map((testimonial, index) => (
-              <div 
+              <div
                 key={index}
                 className="glass-card hover:border-primaryClr/30 transition-all duration-300 animate-fadeInUp"
                 style={{ animationDelay: `${index * 0.1}s` }}
               >
                 <div className="flex items-center gap-4 mb-6">
-                  <img 
-                    src={testimonial.image} 
+                  <img
+                    src={testimonial.image}
                     alt={testimonial.name}
                     className="w-16 h-16 rounded-full border-2 border-primaryClr/20"
                   />
@@ -740,7 +747,7 @@ const Landing = () => {
             Join hundreds of schools already using our platform to create positive learning environments.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <button 
+            <button
               onClick={() => navigate('/login')}
               className="btn-primary px-10 py-4 text-lg flex items-center justify-center gap-3 group shadow-2xl shadow-primaryClr/30"
             >

@@ -182,6 +182,18 @@ router.get('/stats', authenticate, authorize('supervisor', 'admin'), behaviorCon
 
 /**
  * @swagger
+ * /api/behaviors/public-analytics:
+ *   get:
+ *     summary: Get public behavior analytics for landing page
+ *     tags: [Behaviors]
+ *     responses:
+ *       200:
+ *         description: Analytical data for public consumption
+ */
+router.get('/public-analytics', behaviorController.getPublicAnalytics);
+
+/**
+ * @swagger
  * /api/behaviors/analytics:
  *   get:
  *     summary: Get detailed behavior analytics

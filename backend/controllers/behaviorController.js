@@ -203,6 +203,13 @@ const reviewBehavior = async (req, res) => {
       );
     }
 
+    // 5. Mark related notifications as read for THIS supervisor
+    await connection.query(`
+      UPDATE notifications 
+      SET is_read = true 
+      WHERE user_id = ? AND related_id = ? AND type = 'incident'
+    `, [approved_by, id]);
+
     await connection.commit();
     res.json({ message: `Behavior record ${status} successfully` });
   } catch (error) {
@@ -426,6 +433,35 @@ const getCertificateData = async (req, res) => {
   }
 };
 
+const getPublicAnalytics = async (req, res) => {
+  try {
+    const [impactOverview] = await db.query(`
+      SELECT 
+        SUM(CASE WHEN bc.type = 'positive' THEN 1 ELSE 0 END) as total_positive,
+        SUM(CASE WHEN bc.type = 'negative' THEN 1 ELSE 0 END) as total_negative,
+        COUNT(*) as total_logs
+      FROM behavior_records br
+      JOIN behavior_categories bc ON br.category_id = bc.id
+      WHERE br.status = 'approved'
+    `);
+
+    const [counts] = await db.query(`
+      SELECT 
+        (SELECT COUNT(*) FROM students WHERE status = 'active') as student_count,
+        (SELECT COUNT(*) FROM users WHERE is_active = true) as staff_count
+      FROM DUAL
+    `);
+
+    res.json({
+      impact: impactOverview[0],
+      counts: counts[0]
+    });
+  } catch (error) {
+    console.error('Error fetching public analytics:', error);
+    res.status(500).json({ error: 'Internal Server Error' });
+  }
+};
+
 module.exports = {
   getBehaviorCategories,
   createCategory,
@@ -435,6 +471,7 @@ module.exports = {
   getPendingRecords,
   getSupervisorStats,
   getAnalyticsSummary,
+  getPublicAnalytics,
   getTeacherHistory,
   getCertificateData
 };

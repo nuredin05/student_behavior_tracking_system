@@ -2,6 +2,11 @@ import React, { useState, useEffect } from 'react';
 import api from '../api/axios';
 import { UserPlus, Camera, CheckCircle, AlertCircle, Loader2, Users, FileSpreadsheet, UploadCloud, DownloadCloud } from 'lucide-react';
 
+// Global utility for immediate state synchronization
+const triggerSystemUpdate = () => {
+  window.dispatchEvent(new CustomEvent('system-update'));
+};
+
 const OfficerDashboard = () => {
   const [formData, setFormData] = useState({
     admission_number: '',
@@ -79,6 +84,7 @@ const OfficerDashboard = () => {
       
       const studentRes = await api.get('/students');
       setStudents(studentRes.data);
+      triggerSystemUpdate();
     } catch (error) {
       setBulkStatus({ type: 'error', message: error.response?.data?.error || 'Bulk import failed.' });
     } finally {
@@ -116,6 +122,7 @@ const OfficerDashboard = () => {
       ]);
       setStudents(studentRes.data);
       setFormData(prev => ({ ...prev, admission_number: nextIdRes.data.nextId }));
+      triggerSystemUpdate();
     } catch (error) {
       setStatus({ type: 'error', message: error.response?.data?.error || 'Failed to register student' });
     } finally {

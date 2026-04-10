@@ -373,9 +373,29 @@ const downloadStudentTemplate = async (req, res) => {
   }
 };
 
+const getTopStudents = async (req, res) => {
+  try {
+    const limit = parseInt(req.query.limit) || 10;
+    const [students] = await db.query(`
+      SELECT s.id, s.first_name, s.last_name, s.photo_url, s.current_points, 
+             c.grade_level, c.section 
+      FROM students s 
+      LEFT JOIN classes c ON s.class_id = c.id
+      WHERE s.status = 'active'
+      ORDER BY s.current_points DESC, s.last_name ASC, s.first_name ASC
+      LIMIT ?
+    `, [limit]);
+    res.json(students);
+  } catch (error) {
+    console.error('Error fetching top students:', error);
+    res.status(500).json({ error: 'Internal Server Error' });
+  }
+};
+
 module.exports = {
   getAllStudents,
   getStudentById,
+  getTopStudents,
   getStudentFullProfile,
   createStudent,
   updateStudent,

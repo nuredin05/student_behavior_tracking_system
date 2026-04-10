@@ -25,6 +25,11 @@ import {
   X
 } from 'lucide-react';
 
+// Global utility for immediate state synchronization
+const triggerSystemUpdate = () => {
+  window.dispatchEvent(new CustomEvent('system-update'));
+};
+
 // ─── Sub-Components ──────────────────────────────────────────────────────────
 
 const StatCard = ({ icon: Icon, label, value, iconColor, bgColor, sub }) => (
@@ -110,6 +115,7 @@ const ReviewQueue = () => {
         type: 'success',
         message: `Incident ${decision === 'approved' ? 'approved ✓' : 'rejected ✗'} successfully.`
       });
+      triggerSystemUpdate();
     } catch (err) {
       console.error('Review error:', err.response?.data || err); // Debug log
       const errorMessage = err.response?.data?.error || err.response?.data?.message || 'Failed to review incident';
@@ -152,6 +158,7 @@ const ReviewQueue = () => {
       setShowActionModal(false);
       setActionDone('');
       setStatus({ type: 'success', message: 'Incident approved & action recorded successfully!' });
+      triggerSystemUpdate();
     } catch (err) {
       const errorMessage = err.response?.data?.error || 'Failed to complete review';
       

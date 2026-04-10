@@ -53,7 +53,19 @@ const Layout = ({ children }) => {
     if (user) {
       fetchNotifications();
       const interval = setInterval(fetchNotifications, 60000); // Poll every minute
-      return () => clearInterval(interval);
+      
+      // Global event listener for immediate updates
+      const handleSystemUpdate = () => {
+        console.log('System update triggered: fetching notifications...');
+        fetchNotifications();
+      };
+      
+      window.addEventListener('system-update', handleSystemUpdate);
+      
+      return () => {
+        clearInterval(interval);
+        window.removeEventListener('system-update', handleSystemUpdate);
+      };
     }
   }, [user]);
 
@@ -193,7 +205,7 @@ const Layout = ({ children }) => {
               >
                 <Bell size={20} />
                 {unreadCount > 0 && (
-                  <span className="absolute top-1.5 right-1.5 w-4 h-4 bg-dangerClr text-[10px] text-white flex items-center justify-center rounded-full border-2 border-bgDark animate-pulse">
+                  <span className="absolute top-2 right-2 min-w-[18px] h-[18px] px-1 bg-dangerClr text-[10px] font-black text-white flex items-center justify-center rounded-full border-2 border-bgDark shadow-lg transform translate-x-1/2 -translate-y-1/2 animate-pulse">
                     {unreadCount}
                   </span>
                 )}
