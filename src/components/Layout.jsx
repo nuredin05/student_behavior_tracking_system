@@ -113,7 +113,7 @@ const Layout = ({ children }) => {
     { name: 'Students', icon: Users, path: '/students', roles: ['officer', 'teacher', 'supervisor', 'manager'] },
     { name: 'Review Incidents', icon: ShieldCheck, path: '/review-incidents', roles: ['supervisor', 'admin'] },
     { name: 'Analytics', icon: BarChart3, path: '/analytics', roles: ['supervisor', 'manager'] },
-    { name: 'Manage Rewards', icon: Award, path: '/rewards', roles: ['manager', 'admin'] },
+    { name: 'Manage Rewards', icon: Award, path: '/rewards', roles: ['manager', 'admin', 'supervisor'] },
     { name: 'User Management', icon: ShieldCheck, path: '/users', roles: ['admin', 'supervisor'] },
     { name: 'School Structure', icon: School, path: '/school-structure', roles: ['admin', 'supervisor'] },
     { name: 'Settings', icon: Settings, path: '/settings', roles: ['officer', 'teacher', 'supervisor', 'manager', 'parent'] },

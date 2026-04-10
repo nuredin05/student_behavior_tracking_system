@@ -21,7 +21,9 @@ const Rewards = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('inventory'); // inventory or redemptions
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [formData, setFormData] = useState({ name: '', description: '', point_cost: '', stock: -1 });
+  const [isEditMode, setIsEditMode] = useState(false);
+  const [editingId, setEditingId] = useState(null);
+  const [formData, setFormData] = useState({ name: '', description: '', point_cost: '', stock: -1, is_active: true });
   const [status, setStatus] = useState({ type: '', message: '' });
 
   useEffect(() => {
@@ -47,13 +49,44 @@ const Rewards = () => {
     e.preventDefault();
     setStatus({ type: '', message: '' });
     try {
-      await api.post('/rewards', formData);
-      setStatus({ type: 'success', message: 'Reward created successfully!' });
-      setIsModalOpen(false);
-      setFormData({ name: '', description: '', point_cost: '', stock: -1 });
+      if (isEditMode) {
+        await api.put(`/rewards/${editingId}`, formData);
+        setStatus({ type: 'success', message: 'Reward updated successfully!' });
+      } else {
+        await api.post('/rewards', formData);
+        setStatus({ type: 'success', message: 'Reward created successfully!' });
+      }
+      setTimeout(() => {
+        setIsModalOpen(false);
+        fetchData();
+      }, 1000);
+    } catch (error) {
+      setStatus({ type: 'error', message: `Failed to ${isEditMode ? 'update' : 'create'} reward` });
+    }
+  };
+
+  const handleEdit = (reward) => {
+    setFormData({
+      name: reward.name,
+      description: reward.description || '',
+      point_cost: reward.point_cost,
+      stock: reward.stock,
+      is_active: reward.is_active
+    });
+    setEditingId(reward.id);
+    setIsEditMode(true);
+    setIsModalOpen(true);
+  };
+
+  const handleDelete = async (id) => {
+    if (!window.confirm('Are you sure you want to delete this reward?')) return;
+    try {
+      // Note: Backend might need a delete route. If missing, we'll set is_active=false.
+      await api.put(`/rewards/${id}`, { is_active: false });
+      setStatus({ type: 'success', message: 'Reward deactivated successfully!' });
       fetchData();
     } catch (error) {
-      setStatus({ type: 'error', message: 'Failed to create reward' });
+      console.error('Error deleting reward:', error);
     }
   };
 
@@ -83,7 +116,11 @@ const Rewards = () => {
           <p className="text-secondaryClr">Manage physical and digital rewards for students.</p>
         </div>
         <button 
-          onClick={() => setIsModalOpen(true)}
+          onClick={() => {
+            setFormData({ name: '', description: '', point_cost: '', stock: -1, is_active: true });
+            setIsEditMode(false);
+            setIsModalOpen(true);
+          }}
           className="btn-primary px-6 py-3 flex items-center gap-2 self-start sm:self-auto shadow-xl"
         >
           <Plus size={20} />
@@ -137,10 +174,16 @@ const Rewards = () => {
                 </div>
 
                 <div className="flex gap-2">
-                  <button className="flex-1 py-2 bg-white/5 hover:bg-white/10 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-2">
+                  <button 
+                    onClick={() => handleEdit(reward)}
+                    className="flex-1 py-2 bg-white/5 hover:bg-white/10 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-2"
+                  >
                     <Edit size={14} /> Edit
                   </button>
-                  <button className="p-2 bg-dangerClr/10 hover:bg-dangerClr/20 text-dangerClr rounded-xl transition-all">
+                  <button 
+                    onClick={() => handleDelete(reward.id)}
+                    className="p-2 bg-dangerClr/10 hover:bg-dangerClr/20 text-dangerClr rounded-xl transition-all"
+                  >
                     <Trash2 size={16} />
                   </button>
                 </div>
@@ -310,8 +353,13 @@ const Rewards = () => {
               <XCircle size={24} />
             </button>
             
-            <h2 className="text-2xl font-bold">New Reward</h2>
+            <h2 className="text-2xl font-bold">{isEditMode ? 'Edit Reward' : 'New Reward'}</h2>
             <form onSubmit={handleSubmit} className="space-y-4">
+              {status.message && (
+                <div className={`p-4 rounded-xl text-xs font-bold ${status.type === 'success' ? 'bg-accentClr/10 text-accentClr border border-accentClr/20' : 'bg-dangerClr/10 text-dangerClr border border-dangerClr/20'}`}>
+                  {status.message}
+                </div>
+              )}
               <div className="space-y-2">
                 <label className="text-xs font-bold text-secondaryClr uppercase tracking-widest">Reward Name</label>
                 <input 
@@ -353,7 +401,7 @@ const Rewards = () => {
               </div>
               
               <button type="submit" className="btn-primary w-full py-4 mt-4 font-black uppercase tracking-widest shadow-xl">
-                Define Reward Item
+                {isEditMode ? 'Update Reward Item' : 'Define Reward Item'}
               </button>
             </form>
           </div>

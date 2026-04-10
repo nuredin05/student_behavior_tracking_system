@@ -131,31 +131,64 @@ const getStudentFullProfile = async (req, res) => {
 // Create a new student (Officer task)
 const createStudent = async (req, res) => {
   const { admission_number, first_name, last_name, date_of_birth, gender, class_id, photo_url, parent_phone } = req.body;
-  const officerId = req.user.id; // From authMiddleware
+  const officerId = req.user.id;
 
   if (!admission_number || !first_name || !last_name || !photo_url) {
     return res.status(400).json({ error: 'admission_number, first_name, last_name, and photo_url are required' });
   }
 
+  const connection = await db.getConnection();
   try {
-    const [existing] = await db.query('SELECT id FROM students WHERE admission_number = ?', [admission_number]);
+    await connection.beginTransaction();
+
+    const [existing] = await connection.query('SELECT id FROM students WHERE admission_number = ?', [admission_number]);
     if (existing.length > 0) {
+      await connection.rollback();
       return res.status(400).json({ error: 'A student with this admission number already exists' });
     }
 
     const studentId = uuidv4();
-    await db.query(`
+    await connection.query(`
       INSERT INTO students (id, admission_number, first_name, last_name, date_of_birth, gender, class_id, photo_url, parent_phone, registered_by)
       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `, [studentId, admission_number, first_name, last_name, date_of_birth || null, gender || null, class_id || null, photo_url, parent_phone || null, officerId]);
 
+    // --- Link Parent Logic ---
+    if (parent_phone && parent_phone.trim() !== '') {
+      const phone = parent_phone.trim();
+
+      // 1. Find or Create Parent record (by phone)
+      let [parents] = await connection.query('SELECT id FROM parents WHERE phone = ?', [phone]);
+      let parentId;
+
+      if (parents.length > 0) {
+        parentId = parents[0].id;
+      } else {
+        parentId = uuidv4();
+        await connection.query(`
+          INSERT INTO parents (id, phone, first_name, last_name)
+          VALUES (?, ?, ?, ?)
+        `, [parentId, phone, 'Parent of', `${first_name} ${last_name}`]);
+      }
+
+      // 2. Link Student and Parent
+      await connection.query(`
+        INSERT IGNORE INTO student_parents (student_id, parent_id, relationship, is_primary)
+        VALUES (?, ?, 'Parent', true)
+      `, [studentId, parentId]);
+    }
+
+    await connection.commit();
     res.status(201).json({
-      message: 'Student created successfully',
+      message: 'Student created and linked successfully',
       student: { id: studentId, admission_number, first_name, last_name, photo_url }
     });
   } catch (error) {
+    await connection.rollback();
     console.error('Error creating student:', error);
     res.status(500).json({ error: 'Internal Server Error' });
+  } finally {
+    connection.release();
   }
 };
 
@@ -213,7 +246,9 @@ const bulkImportStudents = async (req, res) => {
   let successCount = 0;
   let skipCount = 0;
 
+  const connection = await db.getConnection();
   try {
+    await connection.beginTransaction();
     // Use absolute path so xlsx.readFile works regardless of cwd
     const absolutePath = path.resolve(req.file.path);
     const workbook = xlsx.readFile(absolutePath);
@@ -283,7 +318,7 @@ const bulkImportStudents = async (req, res) => {
       }
 
       const studentId = uuidv4();
-      await db.query(`
+      await connection.query(`
         INSERT INTO students (id, admission_number, first_name, last_name, gender, date_of_birth, class_id, parent_phone, registered_by, photo_url)
         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
       `, [
@@ -296,19 +331,48 @@ const bulkImportStudents = async (req, res) => {
         resolvedClassId,
         parent_phone,
         officerId,
-        '' // No default photo for bulk import (use empty string to satisfy NOT NULL constraint)
+        ''
       ]);
+
+      // --- Link Parent Logic ---
+      if (parent_phone && parent_phone.trim() !== '') {
+        const phone = parent_phone.trim();
+
+        // 1. Find or Create Parent record (by phone)
+        let [parents] = await connection.query('SELECT id FROM parents WHERE phone = ?', [phone]);
+        let parentId;
+        if (parents.length > 0) {
+          parentId = parents[0].id;
+        } else {
+          parentId = uuidv4();
+          await connection.query(`
+            INSERT INTO parents (id, phone, first_name, last_name)
+            VALUES (?, ?, ?, ?)
+          `, [parentId, phone, 'Parent of', `${first_name} ${last_name}`]);
+        }
+
+        // 2. Link Student and Parent
+        await connection.query(`
+          INSERT IGNORE INTO student_parents (student_id, parent_id, relationship, is_primary)
+          VALUES (?, ?, 'Parent', true)
+        `, [studentId, parentId]);
+      }
+
       successCount++;
     }
+    await connection.commit();
 
     // Clean up temp file
     fs.unlink(req.file.path, (err) => { if (err) console.error('Cleanup error:', err); });
 
-    res.status(200).json({ message: 'Import complete', successCount, skipCount });
+    res.status(200).json({ message: 'Import complete and parents linked', successCount, skipCount });
   } catch (error) {
+    if (connection) await connection.rollback();
     console.error('Bulk import error:', error.message, error.stack);
     if (req.file && req.file.path) fs.unlink(req.file.path, () => { });
     res.status(500).json({ error: 'Bulk import failed: ' + error.message });
+  } finally {
+    if (connection) connection.release();
   }
 };
 
@@ -347,7 +411,7 @@ const downloadStudentTemplate = async (req, res) => {
   try {
     const data = [
       {
-        "Admission Number": "AMSS/9A/001",
+        "Admission Number": "AMSS/001/2026",
         "First Name": "John",
         "Last Name": "Doe",
         "Gender": "male",
@@ -405,7 +469,7 @@ const getPublicStudentProfile = async (req, res) => {
 
     // Prevent search if phone is suspectly short (e.g. empty)
     if (trimmedPhone.length < 6) {
-       return res.status(400).json({ error: 'Please provide a valid registered phone number.' });
+      return res.status(400).json({ error: 'Please provide a valid registered phone number.' });
     }
 
     // 1. Verify Student and Phone (Robust matching)
