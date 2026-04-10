@@ -44,6 +44,9 @@ const uploadAsync = (fieldName) => async (req, res, next) => {
 // GET top students (Public - for landing page)
 router.get('/top', studentController.getTopStudents);
 
+// POST public profile (Public - for parents)
+router.post('/public-profile', studentController.getPublicStudentProfile);
+
 // GET all students
 router.get('/', authenticate, studentController.getAllStudents);
 

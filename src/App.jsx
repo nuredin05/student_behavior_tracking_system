@@ -20,6 +20,7 @@ import ResetPassword from './pages/ResetPassword';
 import Certificate from './pages/Certificate';
 import StudentReport from './pages/StudentReport';
 import Rewards from './pages/Rewards';
+import ParentPortal from './pages/ParentPortal';
 import Layout from './components/Layout';
 
 const Dashboard = () => {
@@ -53,6 +54,7 @@ function App() {
           <Route path="/login" element={<Login />} />
           <Route path="/forgot-password" element={<ForgotPassword />} />
           <Route path="/reset-password" element={<ResetPassword />} />
+          <Route path="/parent-portal" element={<ParentPortal />} />
           
           <Route 
             path="/dashboard" 

@@ -392,10 +392,77 @@ const getTopStudents = async (req, res) => {
   }
 };
 
+const getPublicStudentProfile = async (req, res) => {
+  const { admission_number, parent_phone } = req.body;
+
+  if (!admission_number || !parent_phone) {
+    return res.status(400).json({ error: 'Admission number and parent phone are required' });
+  }
+
+  try {
+    const trimmedAdmission = admission_number.trim();
+    const trimmedPhone = parent_phone.trim();
+
+    // Prevent search if phone is suspectly short (e.g. empty)
+    if (trimmedPhone.length < 6) {
+       return res.status(400).json({ error: 'Please provide a valid registered phone number.' });
+    }
+
+    // 1. Verify Student and Phone (Robust matching)
+    // We use a combination of exact and suffix matching (last 9 digits) to handle +251 vs 09 formats
+    const [student] = await db.query(`
+      SELECT s.id, s.first_name, s.last_name, s.photo_url, s.current_points, s.admission_number,
+             c.grade_level, c.section, s.parent_phone
+      FROM students s 
+      LEFT JOIN classes c ON s.class_id = c.id
+      WHERE LOWER(TRIM(s.admission_number)) = LOWER(?)
+      AND (
+        TRIM(s.parent_phone) = ? 
+        OR (LENGTH(s.parent_phone) >= 9 AND RIGHT(TRIM(s.parent_phone), 9) = RIGHT(?, 9))
+      )
+    `, [trimmedAdmission, trimmedPhone, trimmedPhone]);
+
+    if (student.length === 0) {
+      return res.status(404).json({ error: 'Student not found or phone number mismatch' });
+    }
+
+    const studentId = student[0].id;
+
+    // 2. Get Behavior History
+    const [history] = await db.query(`
+      SELECT b.incident_date, b.points_applied, b.comment, 
+             bc.name as category_name, bc.type as category_type
+      FROM behavior_records b
+      JOIN behavior_categories bc ON b.category_id = bc.id
+      WHERE b.student_id = ? AND b.status = 'approved'
+      ORDER BY b.incident_date DESC, b.created_at DESC
+    `, [studentId]);
+
+    // 3. Get Active Interventions
+    const [interventions] = await db.query(`
+      SELECT i.action_taken, i.status, i.created_at
+      FROM interventions i
+      JOIN behavior_records b ON i.behavior_id = b.id
+      WHERE b.student_id = ?
+      ORDER BY i.created_at DESC
+    `, [studentId]);
+
+    res.json({
+      student: student[0],
+      history,
+      interventions
+    });
+  } catch (error) {
+    console.error('Error fetching public student profile:', error);
+    res.status(500).json({ error: 'Internal Server Error' });
+  }
+};
+
 module.exports = {
   getAllStudents,
   getStudentById,
   getTopStudents,
+  getPublicStudentProfile,
   getStudentFullProfile,
   createStudent,
   updateStudent,

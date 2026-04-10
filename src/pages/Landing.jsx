@@ -62,8 +62,8 @@ const Landing = () => {
       if (photo.startsWith('http')) {
         return photo;
       }
-      // Otherwise, use relative path (Vite proxy will handle /uploads)
-      return photo;
+      // Otherwise, prepend the base URL
+      return `${API_BASE_URL}${photo}`;
     }
 
     // Fallback to avatar generator
@@ -265,22 +265,22 @@ const Landing = () => {
 
   const testimonials = [
     {
-      name: 'Sarah Johnson',
-      role: 'School Principal',
-      image: 'https://ui-avatars.com/api/?name=Sarah+Johnson&background=031f54&color=fff',
-      quote: 'This system transformed how we manage student behavior. The analytics help us identify patterns and intervene early.'
+      name: 'H.E. Abiy Ahmed',
+      role: 'Prime Minister of Ethiopia',
+      image: 'https://ui-avatars.com/api/?name=Abiy+Ahmed&background=031f54&color=fff',
+      quote: 'Digital transformation in our schools is key to building a prosperous tomorrow. This system represents the innovative spirit we need in our education sector to monitor and nurture student excellence.'
     },
     {
-      name: 'Michael Chen',
-      role: 'Teacher',
-      image: 'https://ui-avatars.com/api/?name=Michael+Chen&background=22e950&color=fff',
-      quote: 'Logging incidents is now effortless. I can attach evidence and track student progress all in one place.'
+      name: 'Prof. Berhanu Nega',
+      role: 'Minister of Education (MoE)',
+      image: 'https://ui-avatars.com/api/?name=Berhanu+Nega&background=22e950&color=fff',
+      quote: 'Amana Model Secondary School is leading by example in integrating technology with character building. This tracking system ensures every student is held to a high standard of discipline and achievement.'
     },
     {
-      name: 'Emily Rodriguez',
-      role: 'Parent',
-      image: 'https://ui-avatars.com/api/?name=Emily+Rodriguez&background=2d4b83&color=fff',
-      quote: 'I love receiving real-time updates about my child\'s achievements and areas for improvement. Very transparent!'
+      name: 'Nuru Endis',
+      role: 'Addis Ababa Bureau of Education',
+      image: 'https://ui-avatars.com/api/?name=Nuru+Endis&background=2d4b83&color=fff',
+      quote: 'The efficiency of this behavior tracking platform has sets a new benchmark for schools in the capital. It bridges the gap between teachers, administration, and parents through transparent monitoring.'
     }
   ];
 
@@ -306,6 +306,12 @@ const Landing = () => {
               <a href="#features" className="text-sm font-medium text-secondaryClr hover:text-primaryClr transition-colors">Features</a>
               <a href="#about" className="text-sm font-medium text-secondaryClr hover:text-primaryClr transition-colors">About</a>
               <a href="#testimonials" className="text-sm font-medium text-secondaryClr hover:text-primaryClr transition-colors">Testimonials</a>
+              <button 
+                onClick={() => navigate('/parent-portal')} 
+                className="text-sm font-medium text-secondaryClr hover:text-primaryClr transition-colors uppercase tracking-widest text-[10px]"
+              >
+                Parent Portal
+              </button>
               <button
                 onClick={() => navigate('/login')}
                 className="btn-primary px-6 py-2 flex items-center gap-2"
@@ -379,12 +385,12 @@ const Landing = () => {
                   Get Started
                   <ArrowRight size={20} className="group-hover:translate-x-1 transition-transform" />
                 </button>
-                <button
-                  onClick={() => document.getElementById('features').scrollIntoView({ behavior: 'smooth' })}
-                  className="px-8 py-4 text-lg border-2 border-white/10 rounded-xl hover:bg-white/5 transition-all font-bold flex items-center justify-center gap-3"
+                <button 
+                  onClick={() => navigate('/parent-portal')} 
+                  className="px-8 py-4 bg-white/5 hover:bg-white/10 border border-white/10 rounded-2xl font-bold uppercase tracking-widest text-xs transition-all flex items-center justify-center gap-2 group"
                 >
-                  Learn More
-                  <ChevronRight size={20} />
+                  <Users size={16} className="text-accentClr" />
+                  Parent Portal
                 </button>
               </div>
 
@@ -790,6 +796,7 @@ const Landing = () => {
                 <li><a href="#features" className="text-sm text-secondaryClr hover:text-primaryClr transition-colors">Features</a></li>
                 <li><a href="#about" className="text-sm text-secondaryClr hover:text-primaryClr transition-colors">About</a></li>
                 <li><a href="#testimonials" className="text-sm text-secondaryClr hover:text-primaryClr transition-colors">Testimonials</a></li>
+                <li><button onClick={() => navigate('/parent-portal')} className="text-sm text-secondaryClr hover:text-primaryClr transition-colors">Parent Portal</button></li>
                 <li><button onClick={() => navigate('/login')} className="text-sm text-secondaryClr hover:text-primaryClr transition-colors">Sign In</button></li>
               </ul>
             </div>
