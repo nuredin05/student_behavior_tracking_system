@@ -137,6 +137,28 @@ const createStudent = async (req, res) => {
     return res.status(400).json({ error: 'admission_number, first_name, last_name, and photo_url are required' });
   }
 
+  // Phone Validation
+  if (parent_phone && parent_phone.trim() !== '') {
+    const phoneRegex = /^(09|07|\+2519|\+2517)\d{8}$/;
+    if (!phoneRegex.test(parent_phone.trim())) {
+      return res.status(400).json({ error: 'Please enter a valid phone number (e.g., 09..., 07..., or +251...)' });
+    }
+  }
+
+  // Age Validation for < 15 years
+  if (date_of_birth) {
+    const dob = new Date(date_of_birth);
+    const today = new Date();
+    let age = today.getFullYear() - dob.getFullYear();
+    const m = today.getMonth() - dob.getMonth();
+    if (m < 0 || (m === 0 && today.getDate() < dob.getDate())) {
+      age--;
+    }
+    if (age < 15) {
+      return res.status(400).json({ error: 'Student must be at least 15 years old. Age < 15 is not applicable.' });
+    }
+  }
+
   const connection = await db.getConnection();
   try {
     await connection.beginTransaction();
@@ -196,6 +218,20 @@ const createStudent = async (req, res) => {
 const updateStudent = async (req, res) => {
   const { id } = req.params;
   const { first_name, last_name, date_of_birth, gender, class_id, status } = req.body;
+
+  // Age Validation for < 15 years
+  if (date_of_birth) {
+    const dob = new Date(date_of_birth);
+    const today = new Date();
+    let age = today.getFullYear() - dob.getFullYear();
+    const m = today.getMonth() - dob.getMonth();
+    if (m < 0 || (m === 0 && today.getDate() < dob.getDate())) {
+      age--;
+    }
+    if (age < 15) {
+      return res.status(400).json({ error: 'Student must be at least 15 years old.' });
+    }
+  }
 
   try {
     const [result] = await db.query(`
@@ -301,6 +337,30 @@ const bulkImportStudents = async (req, res) => {
       if (!admission_number || !first_name || !last_name) {
         skipCount++;
         continue;
+      }
+
+      // Phone validation
+      if (parent_phone && parent_phone.trim() !== '') {
+        const phoneRegex = /^(09|07|\+2519|\+2517)\d{8}$/;
+        if (!phoneRegex.test(parent_phone.trim())) {
+          skipCount++;
+          continue; // skip if phone is invalid
+        }
+      }
+
+      // Age validation (< 15 years is not applicable)
+      if (date_of_birth) {
+        const dob = new Date(date_of_birth);
+        const today = new Date();
+        let age = today.getFullYear() - dob.getFullYear();
+        const m = today.getMonth() - dob.getMonth();
+        if (m < 0 || (m === 0 && today.getDate() < dob.getDate())) {
+          age--;
+        }
+        if (age < 15) {
+          skipCount++;
+          continue; // skip if < 15 years old
+        }
       }
 
       // Resolve class_id  

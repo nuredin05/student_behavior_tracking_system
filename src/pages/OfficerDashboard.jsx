@@ -263,6 +263,8 @@ const OfficerDashboard = () => {
                   type="tel"
                   placeholder="0911667788"
                   className="input-field"
+                  pattern="^(09|07|\+2519|\+2517)\d{8}$"
+                  title="Must be a valid phone number (e.g., 09..., 07..., or +251...)"
                   value={formData.parent_phone}
                   onChange={(e) => setFormData({...formData, parent_phone: e.target.value})}
                 />
@@ -272,6 +274,7 @@ const OfficerDashboard = () => {
                 <input
                   type="date"
                   className="input-field"
+                  max={new Date(new Date().setFullYear(new Date().getFullYear() - 15)).toISOString().split('T')[0]}
                   value={formData.date_of_birth}
                   onChange={(e) => setFormData({...formData, date_of_birth: e.target.value})}
                 />
