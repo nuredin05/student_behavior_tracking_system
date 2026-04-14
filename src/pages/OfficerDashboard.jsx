@@ -33,20 +33,34 @@ const OfficerDashboard = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const [classRes, studentRes, nextIdRes] = await Promise.all([
+        const [classRes, studentRes] = await Promise.all([
           api.get('/school/classes'),
-          api.get('/students'),
-          api.get('/students/next-admission-id')
+          api.get('/students')
         ]);
         setClasses(classRes.data);
         setStudents(studentRes.data);
-        setFormData(prev => ({ ...prev, admission_number: nextIdRes.data.nextId }));
       } catch (error) {
         console.error('Error fetching dashboard data:', error);
       }
     };
     fetchData();
   }, []);
+
+  useEffect(() => {
+    const fetchNextId = async () => {
+      if (formData.class_id) {
+        try {
+          const res = await api.get(`/students/next-admission-id?class_id=${formData.class_id}`);
+          setFormData(prev => ({ ...prev, admission_number: res.data.nextId }));
+        } catch (error) {
+          console.error("Error fetching next admission ID:", error);
+        }
+      } else {
+        setFormData(prev => ({ ...prev, admission_number: '' }));
+      }
+    };
+    fetchNextId();
+  }, [formData.class_id]);
 
   const handlePhotoChange = (e) => {
     const file = e.target.files[0];
@@ -115,13 +129,12 @@ const OfficerDashboard = () => {
       setPhoto(null);
       setPreview(null);
       
-      // Re-fetch students and next ID to update counter and form
-      const [studentRes, nextIdRes] = await Promise.all([
-        api.get('/students'),
-        api.get('/students/next-admission-id')
-      ]);
+      // Re-fetch students to update counter and form list
+      const studentRes = await api.get('/students');
       setStudents(studentRes.data);
-      setFormData(prev => ({ ...prev, admission_number: nextIdRes.data.nextId }));
+      // Note: we don't need to manually reset admission_number here to a fetch result,
+      // because clearing `class_id` above will trigger the useEffect, which will wait
+      // for the form state update, but actually it fires because formData.class_id becomes ''.
       triggerSystemUpdate();
     } catch (error) {
       setStatus({ type: 'error', message: error.response?.data?.error || 'Failed to register student' });
@@ -175,21 +188,10 @@ const OfficerDashboard = () => {
               <form onSubmit={handleSubmit} className="space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="space-y-2">
-                <label className="text-sm font-medium text-secondaryClr">Admission Number</label>
-                <input
-                  type="text"
-                  required
-                  placeholder="STU-2026-XXXX"
-                  className="input-field"
-                  value={formData.admission_number}
-                  onChange={(e) => setFormData({...formData, admission_number: e.target.value})}
-                />
-              </div>
-              <div className="space-y-2">
-                <label className="text-sm font-medium text-secondaryClr">Grade / Class</label>
+                <label className="text-sm font-medium text-secondaryClr">Grade / Class (Select First)</label>
                 <select
                   required
-                  className="input-field appearance-none"
+                  className="input-field appearance-none border-primaryClr/50 bg-primaryClrDark/5"
                   value={formData.class_id}
                   onChange={(e) => setFormData({...formData, class_id: e.target.value})}
                 >
@@ -201,6 +203,20 @@ const OfficerDashboard = () => {
                   ))}
                   {!classes.length && <option disabled>No classes found</option>}
                 </select>
+              </div>
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-secondaryClr">Admission Number</label>
+                <input
+                  type="text"
+                  required
+                  placeholder={!formData.class_id ? "Select a class to auto-generate" : "STU-XXXX"}
+                  className={`input-field ${!formData.class_id ? "opacity-60" : ""}`}
+                  value={formData.class_id ? formData.admission_number : ''}
+                  readOnly={!formData.class_id}
+                  onChange={(e) => {
+                    if (formData.class_id) setFormData({...formData, admission_number: e.target.value});
+                  }}
+                />
               </div>
               <div className="space-y-2">
                 <label className="text-sm font-medium text-secondaryClr">First Name</label>

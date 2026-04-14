@@ -378,28 +378,48 @@ const bulkImportStudents = async (req, res) => {
 
 const getNextAdmissionNumber = async (req, res) => {
   try {
-    const year = new Date().getFullYear();
-    const prefix = `AMSS/${year}/`;
+    const { class_id } = req.query;
+    
+    if (!class_id) {
+      return res.json({ nextId: '' });
+    }
 
-    // Find the highest sequence number for this year
+    // Find the highest admission number for this specific class
     const [rows] = await db.query(`
       SELECT admission_number 
       FROM students 
-      WHERE admission_number LIKE ? 
+      WHERE class_id = ? 
       ORDER BY admission_number DESC 
       LIMIT 1
-    `, [`${prefix}%`]);
+    `, [class_id]);
 
-    let nextNumber = 1;
+    let nextId = '';
+
     if (rows.length > 0) {
-      const lastNumberStr = rows[0].admission_number.split('/').pop();
-      const lastNumber = parseInt(lastNumberStr, 10);
-      if (!isNaN(lastNumber)) {
-        nextNumber = lastNumber + 1;
+      const lastAdmission = rows[0].admission_number;
+      // Extract numeric suffix and increment it
+      const match = lastAdmission.match(/(.*?)(\d+)$/);
+      if (match) {
+        const prefixStr = match[1];
+        const numStr = match[2];
+        const nextNum = parseInt(numStr, 10) + 1;
+        // Keep the exact zero-padding of the previous number
+        nextId = prefixStr + nextNum.toString().padStart(numStr.length, '0');
+      } else {
+        // Fallback if previous admission number has no numeric suffix
+        nextId = lastAdmission + '-1';
+      }
+    } else {
+      // If there are no students in this class yet, generate a formatted starting number
+      const year = new Date().getFullYear();
+      const [classRes] = await db.query('SELECT grade_level, section FROM classes WHERE id = ?', [class_id]);
+      if (classRes.length > 0) {
+        nextId = `AMSS/${year}/${classRes[0].grade_level}${classRes[0].section}/001`;
+      } else {
+        nextId = `AMSS/${year}/001`;
       }
     }
 
-    const nextId = `${prefix}${nextNumber.toString().padStart(3, '0')}`;
     res.json({ nextId });
   } catch (error) {
     console.error('Error generating next admission number:', error);
